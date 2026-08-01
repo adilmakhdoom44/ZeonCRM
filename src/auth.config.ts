@@ -15,12 +15,7 @@ export const authConfig = {
         pathname.startsWith("/forgot-password") ||
         pathname.startsWith("/reset-password");
 
-      if (isPublic) {
-        if (isLoggedIn) {
-          return Response.redirect(new URL("/dashboard", request.nextUrl));
-        }
-        return true;
-      }
+      if (isPublic) return true;
       return isLoggedIn;
     },
     jwt({ token, user }) {

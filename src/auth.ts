@@ -12,6 +12,27 @@ const credentialsSchema = z.object({
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  callbacks: {
+    ...authConfig.callbacks,
+    // Unlike the edge-safe jwt callback in authConfig, this one re-checks the
+    // database so deleted or deactivated users are signed out immediately.
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = (user as { role?: string }).role;
+        return token;
+      }
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+        });
+        if (!dbUser || !dbUser.isActive) return null;
+        token.role = dbUser.role;
+        token.name = dbUser.name;
+      }
+      return token;
+    },
+  },
   providers: [
     Credentials({
       credentials: {
