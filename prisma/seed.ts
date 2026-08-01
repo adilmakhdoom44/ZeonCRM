@@ -88,9 +88,18 @@ async function main() {
           {
             name: "Inventory portal revamp",
             description: "Rebuild the internal inventory portal with live stock sync.",
-            status: "IN_PROGRESS",
+            stage: "IN_PROGRESS",
+            price: 24000,
             startDate: new Date("2026-06-01"),
             dueDate: new Date("2026-10-15"),
+            tasks: {
+              create: [
+                { title: "Discovery workshop", isDone: true },
+                { title: "Data model & API design", isDone: true },
+                { title: "Build stock sync service", isDone: false },
+                { title: "UAT with warehouse team", isDone: false },
+              ],
+            },
           },
         ],
       },
@@ -167,8 +176,10 @@ async function main() {
         create: [
           {
             name: "Site logistics tracker",
-            status: "PLANNED",
+            stage: "QUOTED",
+            price: 8500,
             startDate: new Date("2026-09-01"),
+            tasks: { create: [{ title: "Send proposal", isDone: true }] },
           },
         ],
       },

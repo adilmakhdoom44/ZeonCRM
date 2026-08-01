@@ -32,11 +32,13 @@ enum AddressType {
   OTHER
 }
 
-enum ProjectStatus {
-  PLANNED
+enum ProjectStage {
+  QUOTED
+  CONFIRMED
   IN_PROGRESS
-  ON_HOLD
+  REVIEW
   COMPLETED
+  CANCELLED
 }
 
 model User {
@@ -139,17 +141,33 @@ model Address {
 }
 
 model Project {
-  id          String        @id @default(cuid())
+  id          String       @id @default(cuid())
   customerId  String
   name        String
-  description String?       @db.Text
-  status      ProjectStatus @default(PLANNED)
+  description String?      @db.Text
+  stage       ProjectStage @default(QUOTED)
+  price       Decimal?     @db.Decimal(12, 2)
   startDate   DateTime?
   dueDate     DateTime?
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tasks    ProjectTask[]
 
   @@index([customerId])
+  @@index([stage])
+}
+
+model ProjectTask {
+  id        String   @id @default(cuid())
+  projectId String
+  title     String
+  isDone    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([projectId])
 }
