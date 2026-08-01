@@ -1,0 +1,155 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum CustomerStatus {
+  LEAD
+  ACTIVE
+  INACTIVE
+}
+
+enum LabelType {
+  WORK
+  MOBILE
+  HOME
+  OTHER
+}
+
+enum AddressType {
+  BILLING
+  SHIPPING
+  OFFICE
+  OTHER
+}
+
+enum ProjectStatus {
+  PLANNED
+  IN_PROGRESS
+  ON_HOLD
+  COMPLETED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         Role      @default(MEMBER)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  resetTokens PasswordResetToken[]
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Customer {
+  id        String         @id @default(cuid())
+  name      String
+  industry  String?
+  website   String?
+  notes     String?        @db.Text
+  status    CustomerStatus @default(LEAD)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  contacts  Contact[]
+  addresses Address[]
+  projects  Project[]
+
+  @@index([name])
+}
+
+model Contact {
+  id         String   @id @default(cuid())
+  customerId String
+  firstName  String
+  lastName   String
+  title      String?
+  isPrimary  Boolean  @default(false)
+  notes      String?  @db.Text
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  phones   ContactPhone[]
+  emails   ContactEmail[]
+
+  @@index([customerId])
+}
+
+model ContactPhone {
+  id        String    @id @default(cuid())
+  contactId String
+  label     LabelType @default(WORK)
+  number    String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+}
+
+model ContactEmail {
+  id        String    @id @default(cuid())
+  contactId String
+  label     LabelType @default(WORK)
+  email     String
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@index([contactId])
+}
+
+model Address {
+  id         String      @id @default(cuid())
+  customerId String
+  type       AddressType @default(OFFICE)
+  line1      String
+  line2      String?
+  city       String
+  state      String?
+  postalCode String?
+  country    String
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
+
+model Project {
+  id          String        @id @default(cuid())
+  customerId  String
+  name        String
+  description String?       @db.Text
+  status      ProjectStatus @default(PLANNED)
+  startDate   DateTime?
+  dueDate     DateTime?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+}
