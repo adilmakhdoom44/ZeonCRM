@@ -21,6 +21,21 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 | --- | --- |
 | ![Login](docs/login.png) | ![Customer detail](docs/customer-detail.png) |
 
+## Roadmap — 10-day build plan
+
+One focused module per day. Checked off as they land on `main`.
+
+- [ ] **Day 1 — Proposal builder (schema + editor).** `Proposal` + `ProposalItem` models linked to customers: line items with quantity × unit price, subtotal/tax/total, draft status, and a clean editor UI to compose proposals.
+- [ ] **Day 2 — Proposal lifecycle & sharing.** Statuses (draft → sent → accepted / declined / expired), a print-ready proposal view, and a public tokenized share link so a client can view and accept or decline online — no login needed.
+- [ ] **Day 3 — Proposal → project conversion & billing schema.** One click turns an accepted proposal into a project (price, steps pre-filled from line items). `Invoice`, `InvoiceItem` and `Payment` models with sequential invoice numbering.
+- [ ] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
+- [ ] **Day 5 — Payments & revenue dashboard.** Record payments against invoices, outstanding-balance tracking, and dashboard upgrades: pipeline value by stage, revenue this month, unpaid invoices, overdue alerts.
+- [ ] **Day 6 — Activity timeline & notes.** Log calls, meetings and notes on customers and contacts; unified per-customer timeline; follow-up reminders with a "due today" list on the dashboard.
+- [ ] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
+- [ ] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
+- [ ] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
+- [ ] **Day 10 — Settings, polish & release.** Company profile (name, logo, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, empty-state polish, then production deploy and end-to-end smoke test.
+
 ## Stack
 
 - [Next.js 15](https://nextjs.org) (App Router, Server Actions) + TypeScript
