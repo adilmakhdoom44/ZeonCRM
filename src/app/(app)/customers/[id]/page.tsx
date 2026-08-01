@@ -290,7 +290,7 @@ export default async function CustomerDetailPage({
                       </p>
                     )}
                   </div>
-                  <Badge value={project.status} />
+                  <Badge value={project.stage} />
                 </li>
               ))}
             </ul>

@@ -28,7 +28,7 @@ export default async function EditProjectPage({
         <ProjectForm
           action={action}
           customers={customers}
-          defaults={project}
+          defaults={{ ...project, price: project.price === null ? null : Number(project.price) }}
           cancelHref="/projects"
         />
       </Card>

@@ -4,7 +4,8 @@ type ProjectFormValues = {
   customerId?: string;
   name?: string;
   description?: string | null;
-  status?: string;
+  stage?: string;
+  price?: number | string | null;
   startDate?: Date | null;
   dueDate?: Date | null;
 };
@@ -34,20 +35,30 @@ export function ProjectForm({
       />
       <Input label="Project name" name="name" required defaultValue={defaults?.name} />
       <Textarea label="Description" name="description" defaultValue={defaults?.description ?? undefined} />
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2">
         <Select
-          label="Status"
-          name="status"
-          defaultValue={defaults?.status ?? "PLANNED"}
+          label="Stage"
+          name="stage"
+          defaultValue={defaults?.stage ?? "QUOTED"}
           options={[
-            { value: "PLANNED", label: "Planned" },
+            { value: "QUOTED", label: "Quoted" },
+            { value: "CONFIRMED", label: "Confirmed" },
             { value: "IN_PROGRESS", label: "In progress" },
-            { value: "ON_HOLD", label: "On hold" },
+            { value: "REVIEW", label: "Review" },
             { value: "COMPLETED", label: "Completed" },
+            { value: "CANCELLED", label: "Cancelled" },
           ]}
         />
+        <Input
+          label="Fixed price (USD)"
+          name="price"
+          defaultValue={defaults?.price != null ? String(defaults.price) : undefined}
+          placeholder="e.g. 12000"
+        />
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
         <Input label="Start date" name="startDate" type="date" defaultValue={toDateInput(defaults?.startDate)} />
-        <Input label="Due date" name="dueDate" type="date" defaultValue={toDateInput(defaults?.dueDate)} />
+        <Input label="Deadline" name="dueDate" type="date" defaultValue={toDateInput(defaults?.dueDate)} />
       </div>
       <div className="flex gap-3 pt-2">
         <Button>Save project</Button>

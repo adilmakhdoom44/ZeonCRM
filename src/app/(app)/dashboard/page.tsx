@@ -10,14 +10,14 @@ export default async function DashboardPage() {
     await Promise.all([
       prisma.customer.count(),
       prisma.contact.count(),
-      prisma.project.count({ where: { status: { in: ["PLANNED", "IN_PROGRESS"] } } }),
+      prisma.project.count({ where: { stage: { in: ["QUOTED", "CONFIRMED", "IN_PROGRESS", "REVIEW"] } } }),
       prisma.customer.findMany({
         orderBy: { createdAt: "desc" },
         take: 5,
         include: { _count: { select: { contacts: true, projects: true } } },
       }),
       prisma.project.findMany({
-        where: { status: { in: ["PLANNED", "IN_PROGRESS"] } },
+        where: { stage: { in: ["QUOTED", "CONFIRMED", "IN_PROGRESS", "REVIEW"] } },
         orderBy: [{ dueDate: "asc" }],
         take: 5,
         include: { customer: { select: { id: true, name: true } } },
@@ -97,7 +97,7 @@ export default async function DashboardPage() {
                       {p.dueDate && ` · due ${p.dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
                     </p>
                   </div>
-                  <Badge value={p.status} />
+                  <Badge value={p.stage} />
                 </li>
               ))}
             </ul>
