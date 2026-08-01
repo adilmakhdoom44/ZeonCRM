@@ -38,7 +38,7 @@ One focused module per day. Checked off as they land on `main`.
 
 ## Stack
 
-- [Next.js 15](https://nextjs.org) (App Router, Server Actions) + TypeScript
+- [Next.js 16](https://nextjs.org) (App Router, Server Actions) + TypeScript
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [Prisma 6](https://www.prisma.io) ORM + **MySQL 8**
 - [Auth.js v5](https://authjs.dev) (NextAuth) credentials provider
