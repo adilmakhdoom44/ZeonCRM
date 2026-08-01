@@ -9,11 +9,13 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Customers** — searchable account list with status (lead / active / inactive), industry, website and notes
 - **Contacts** — multiple people per customer, each with any number of phone numbers and email addresses, primary-contact flag
 - **Addresses** — office / billing / shipping addresses per customer
-- **Projects** — work linked to customers with status and timeline (v2 module groundwork)
+- **Projects** — Kanban pipeline built for fixed-price service work: drag projects across Quoted → Confirmed → In progress → Review → Completed/Cancelled, click a card for an overlay with price, deadline, step checklist and complete/cancel actions
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
-- **Role-based access** — admin-only areas enforced server-side, not just hidden in the UI
+- **Role-based access** — admin-only areas enforced server-side, not just hidden in the UI; deactivated or deleted users are signed out on their very next request
+
+![Projects Kanban](docs/projects-kanban.png)
 
 | Login | Customer detail |
 | --- | --- |
