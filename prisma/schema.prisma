@@ -32,6 +32,14 @@ enum AddressType {
   OTHER
 }
 
+enum ProposalStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  DECLINED
+  EXPIRED
+}
+
 enum ProjectStage {
   QUOTED
   CONFIRMED
@@ -80,6 +88,7 @@ model Customer {
   contacts  Contact[]
   addresses Address[]
   projects  Project[]
+  proposals Proposal[]
 
   @@index([name])
 }
@@ -158,6 +167,40 @@ model Project {
 
   @@index([customerId])
   @@index([stage])
+}
+
+model Proposal {
+  id         String         @id @default(cuid())
+  number     String         @unique
+  customerId String
+  title      String
+  summary    String?        @db.Text
+  status     ProposalStatus @default(DRAFT)
+  issueDate  DateTime       @default(now())
+  validUntil DateTime?
+  taxRate    Decimal        @default(0) @db.Decimal(5, 2)
+  terms      String?        @db.Text
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items    ProposalItem[]
+
+  @@index([customerId])
+  @@index([status])
+}
+
+model ProposalItem {
+  id          String  @id @default(cuid())
+  proposalId  String
+  description String
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal @default(0) @db.Decimal(12, 2)
+  position    Int     @default(0)
+
+  proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+
+  @@index([proposalId])
 }
 
 model ProjectTask {
