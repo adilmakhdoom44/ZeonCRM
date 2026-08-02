@@ -106,7 +106,7 @@ async function main() {
     },
   });
 
-  await prisma.customer.create({
+  const beacon = await prisma.customer.create({
     data: {
       name: "Beacon Health Group",
       industry: "Healthcare",
@@ -144,7 +144,7 @@ async function main() {
     },
   });
 
-  await prisma.customer.create({
+  const atlas = await prisma.customer.create({
     data: {
       name: "Atlas Construction Ltd",
       industry: "Construction",
@@ -186,7 +186,44 @@ async function main() {
     },
   });
 
-  console.log("Seeded 3 sample customers.");
+  await prisma.proposal.create({
+    data: {
+      number: "PRO-0001",
+      customerId: beacon.id,
+      title: "Patient portal discovery & build",
+      summary: "A two-phase engagement: discovery sprint followed by a pilot portal build.",
+      status: "SENT",
+      taxRate: 8.5,
+      validUntil: new Date("2026-09-15"),
+      terms: "50% due on acceptance, balance on delivery. Quote valid for 30 days.",
+      items: {
+        create: [
+          { description: "Discovery workshop & stakeholder interviews", quantity: 1, unitPrice: 4200, position: 0 },
+          { description: "Portal UI design (per screen)", quantity: 8, unitPrice: 650, position: 1 },
+          { description: "Pilot build & integration", quantity: 1, unitPrice: 18500, position: 2 },
+        ],
+      },
+    },
+  });
+
+  await prisma.proposal.create({
+    data: {
+      number: "PRO-0002",
+      customerId: atlas.id,
+      title: "Site logistics tracker — phase 1",
+      summary: "Mobile-first tracker for deliveries and plant hire across active sites.",
+      taxRate: 20,
+      validUntil: new Date("2026-09-30"),
+      items: {
+        create: [
+          { description: "Requirements workshop", quantity: 1, unitPrice: 1500, position: 0 },
+          { description: "Tracker build (developer days)", quantity: 14, unitPrice: 500, position: 1 },
+        ],
+      },
+    },
+  });
+
+  console.log("Seeded 3 sample customers and 2 proposals.");
 }
 
 main()

@@ -9,6 +9,7 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Customers** — searchable account list with status (lead / active / inactive), industry, website and notes
 - **Contacts** — multiple people per customer, each with any number of phone numbers and email addresses, primary-contact flag
 - **Addresses** — office / billing / shipping addresses per customer
+- **Proposals** — build quotes from line items (quantity × unit price) with live subtotal, tax and total, terms, validity dates, sequential `PRO-0001` numbering and one-click duplication
 - **Projects** — Kanban pipeline built for fixed-price service work: drag projects across Quoted → Confirmed → In progress → Review → Completed/Cancelled, click a card for an overlay with price, deadline, step checklist and complete/cancel actions
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
@@ -16,6 +17,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Role-based access** — admin-only areas enforced server-side, not just hidden in the UI; deactivated or deleted users are signed out on their very next request
 
 ![Projects Kanban](docs/projects-kanban.png)
+
+![Proposal builder](docs/proposal-builder.png)
 
 | Login | Customer detail |
 | --- | --- |
@@ -25,7 +28,7 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 
 One focused module per day. Checked off as they land on `main`.
 
-- [ ] **Day 1 — Proposal builder (schema + editor).** `Proposal` + `ProposalItem` models linked to customers: line items with quantity × unit price, subtotal/tax/total, draft status, and a clean editor UI to compose proposals.
+- [x] **Day 1 — Proposal builder (schema + editor).** `Proposal` + `ProposalItem` models linked to customers: line items with quantity × unit price, subtotal/tax/total, draft status, and a clean editor UI to compose proposals.
 - [ ] **Day 2 — Proposal lifecycle & sharing.** Statuses (draft → sent → accepted / declined / expired), a print-ready proposal view, and a public tokenized share link so a client can view and accept or decline online — no login needed.
 - [ ] **Day 3 — Proposal → project conversion & billing schema.** One click turns an accepted proposal into a project (price, steps pre-filled from line items). `Invoice`, `InvoiceItem` and `Payment` models with sequential invoice numbering.
 - [ ] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
