@@ -183,6 +183,14 @@ model Proposal {
   createdAt  DateTime       @default(now())
   updatedAt  DateTime       @updatedAt
 
+  // Sharing — the token is the client's only credential, so it is issued when the
+  // proposal is sent and cleared when it goes back to draft.
+  shareToken      String?   @unique
+  sentAt          DateTime?
+  respondedAt     DateTime?
+  respondedByName String?
+  declineNote     String?   @db.Text
+
   customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
   items    ProposalItem[]
 
