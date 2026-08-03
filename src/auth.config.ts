@@ -13,7 +13,9 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/forgot-password") ||
-        pathname.startsWith("/reset-password");
+        pathname.startsWith("/reset-password") ||
+        // Shared proposals: the token in the URL is the only credential.
+        pathname.startsWith("/p/");
 
       if (isPublic) return true;
       return isLoggedIn;
