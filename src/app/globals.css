@@ -27,3 +27,24 @@ body {
   font-family: var(--font-sans), system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
 }
+
+/* Printing a proposal should yield the document alone — no chrome, no buttons. */
+@media print {
+  body {
+    background: #fff;
+  }
+
+  header,
+  .no-print {
+    display: none !important;
+  }
+
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+
+  @page {
+    margin: 18mm;
+  }
+}
