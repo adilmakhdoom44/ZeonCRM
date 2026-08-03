@@ -9,6 +9,7 @@ import {
   saveProposalAction,
 } from "@/lib/actions/proposals";
 import { Badge, Card, CardHeader } from "@/components/ui";
+import { ProposalLifecycle } from "@/components/proposal-lifecycle";
 
 export type EditorItem = {
   description: string;
@@ -19,7 +20,14 @@ export type EditorItem = {
 export type EditorProposal = {
   id: string;
   number: string;
+  /** Calendar-aware status: a sent proposal past its validity reads as EXPIRED. */
   status: string;
+  editable: boolean;
+  shareUrl: string | null;
+  sentAt: string | null;
+  respondedByName: string | null;
+  respondedAt: string | null;
+  declineNote: string | null;
   title: string;
   customerId: string;
   summary: string;
@@ -74,6 +82,9 @@ export function ProposalEditor({
   const [saved, setSaved] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+
+  // A quote the customer can already see must not change under them.
+  const readOnly = !proposal.editable;
 
   function touch() {
     setSaved(false);
@@ -145,20 +156,35 @@ export function ProposalEditor({
           <Badge value={proposal.status} />
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className={`text-sm ${error ? "text-red-600" : "text-slate-500"}`}>
-            {error ?? (pending ? "Saving…" : saved ? "All changes saved" : "Unsaved changes")}
-          </span>
-          <button
-            type="button"
-            onClick={save}
-            disabled={pending || saved}
-            className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
-          >
-            Save changes
-          </button>
-        </div>
+        {readOnly ? (
+          <span className="text-sm text-slate-500">Locked while the customer has it</span>
+        ) : (
+          <div className="flex items-center gap-3">
+            <span className={`text-sm ${error ? "text-red-600" : "text-slate-500"}`}>
+              {error ?? (pending ? "Saving…" : saved ? "All changes saved" : "Unsaved changes")}
+            </span>
+            <button
+              type="button"
+              onClick={save}
+              disabled={pending || saved}
+              className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700 disabled:opacity-50"
+            >
+              Save changes
+            </button>
+          </div>
+        )}
       </div>
+
+      <ProposalLifecycle
+        id={proposal.id}
+        status={proposal.status}
+        shareUrl={proposal.shareUrl}
+        sentAt={proposal.sentAt}
+        validUntil={proposal.validUntil || null}
+        respondedByName={proposal.respondedByName}
+        respondedAt={proposal.respondedAt}
+        declineNote={proposal.declineNote}
+      />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">
         <div className="space-y-6">
@@ -170,7 +196,8 @@ export function ProposalEditor({
                 touch();
               }}
               placeholder="Proposal title"
-              className="w-full border-0 bg-transparent p-0 text-lg font-semibold tracking-tight text-slate-900 placeholder:text-slate-300 focus:outline-none"
+              disabled={readOnly}
+              className="w-full border-0 bg-transparent p-0 text-lg font-semibold tracking-tight text-slate-900 placeholder:text-slate-300 focus:outline-none disabled:text-slate-900"
             />
             <textarea
               value={summary}
@@ -180,7 +207,8 @@ export function ProposalEditor({
               }}
               rows={2}
               placeholder="A short summary of what you are proposing…"
-              className="mt-2 w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none"
+              disabled={readOnly}
+              className="mt-2 w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none disabled:text-slate-600"
             />
           </Card>
 
@@ -208,6 +236,7 @@ export function ProposalEditor({
                       value={row.description}
                       onChange={(e) => updateRow(row.key, { description: e.target.value })}
                       placeholder="Discovery workshop, design sprint, hosting…"
+                      disabled={readOnly}
                       className={`${fieldCls} min-w-40 flex-1`}
                     />
                     <input
@@ -215,6 +244,7 @@ export function ProposalEditor({
                       onChange={(e) => updateRow(row.key, { quantity: e.target.value })}
                       inputMode="decimal"
                       aria-label="Quantity"
+                      disabled={readOnly}
                       className={`${fieldCls} w-20 text-right tabular-nums`}
                     />
                     <input
@@ -222,6 +252,7 @@ export function ProposalEditor({
                       onChange={(e) => updateRow(row.key, { unitPrice: e.target.value })}
                       inputMode="decimal"
                       aria-label="Unit price"
+                      disabled={readOnly}
                       className={`${fieldCls} w-28 text-right tabular-nums`}
                     />
                     <span className="w-28 text-right text-sm font-medium tabular-nums text-slate-900">
@@ -229,26 +260,30 @@ export function ProposalEditor({
                         lineTotal({ quantity: num(row.quantity), unitPrice: num(row.unitPrice) }),
                       )}
                     </span>
-                    <button
-                      type="button"
-                      onClick={() => removeRow(row.key)}
-                      title="Remove line"
-                      aria-label="Remove line"
-                      className="w-5 text-slate-300 transition-colors hover:text-red-500"
-                    >
-                      ✕
-                    </button>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => removeRow(row.key)}
+                        title="Remove line"
+                        aria-label="Remove line"
+                        className="w-5 text-slate-300 transition-colors hover:text-red-500"
+                      >
+                        ✕
+                      </button>
+                    )}
                   </li>
                 ))}
               </ul>
 
-              <button
-                type="button"
-                onClick={addRow}
-                className="my-2 rounded-lg px-2 py-1.5 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50"
-              >
-                + Add line
-              </button>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={addRow}
+                  className="my-2 rounded-lg px-2 py-1.5 text-sm font-medium text-brand-600 transition-colors hover:bg-brand-50"
+                >
+                  + Add line
+                </button>
+              )}
             </div>
           </Card>
 
@@ -263,6 +298,7 @@ export function ProposalEditor({
                 }}
                 rows={4}
                 placeholder="50% due on acceptance, balance on delivery…"
+                disabled={readOnly}
                 className={`${fieldCls} w-full`}
               />
             </div>
@@ -290,6 +326,7 @@ export function ProposalEditor({
                     }}
                     inputMode="decimal"
                     aria-label="Tax rate percentage"
+                    disabled={readOnly}
                     className="w-14 rounded-md border border-slate-300 px-2 py-1 text-right text-xs tabular-nums focus:border-brand-500 focus:outline-2 focus:outline-brand-100"
                   />
                   %
@@ -318,6 +355,7 @@ export function ProposalEditor({
                     setCustomerId(e.target.value);
                     touch();
                   }}
+                  disabled={readOnly}
                   className={`${fieldCls} w-full`}
                 >
                   {customers.map((c) => (
@@ -337,6 +375,7 @@ export function ProposalEditor({
                     setValidUntil(e.target.value);
                     touch();
                   }}
+                  disabled={readOnly}
                   className={`${fieldCls} w-full`}
                 />
               </label>

@@ -10,6 +10,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Contacts** — multiple people per customer, each with any number of phone numbers and email addresses, primary-contact flag
 - **Addresses** — office / billing / shipping addresses per customer
 - **Proposals** — build quotes from line items (quantity × unit price) with live subtotal, tax and total, terms, validity dates, sequential `PRO-0001` numbering and one-click duplication
+- **Send & track proposals** — mark a quote as sent to lock it and mint a private share link; watch it move through sent → accepted / declined, with quotes past their validity date shown as expired automatically
+- **Client acceptance without an account** — customers open the share link, read a print-ready quote and accept or decline by typing their name, which is recorded with the timestamp. Returning a proposal to draft revokes the old link
 - **Projects** — Kanban pipeline built for fixed-price service work: drag projects across Quoted → Confirmed → In progress → Review → Completed/Cancelled, click a card for an overlay with price, deadline, step checklist and complete/cancel actions
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
@@ -20,6 +22,10 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 
 ![Proposal builder](docs/proposal-builder.png)
 
+The same quote as the customer sees it — a public link, no login required:
+
+![Shared proposal](docs/shared-proposal.png)
+
 | Login | Customer detail |
 | --- | --- |
 | ![Login](docs/login.png) | ![Customer detail](docs/customer-detail.png) |
@@ -29,7 +35,7 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 One focused module per day. Checked off as they land on `main`.
 
 - [x] **Day 1 — Proposal builder (schema + editor).** `Proposal` + `ProposalItem` models linked to customers: line items with quantity × unit price, subtotal/tax/total, draft status, and a clean editor UI to compose proposals.
-- [ ] **Day 2 — Proposal lifecycle & sharing.** Statuses (draft → sent → accepted / declined / expired), a print-ready proposal view, and a public tokenized share link so a client can view and accept or decline online — no login needed.
+- [x] **Day 2 — Proposal lifecycle & sharing.** Statuses (draft → sent → accepted / declined / expired), a print-ready proposal view, and a public tokenized share link so a client can view and accept or decline online — no login needed.
 - [ ] **Day 3 — Proposal → project conversion & billing schema.** One click turns an accepted proposal into a project (price, steps pre-filled from line items). `Invoice`, `InvoiceItem` and `Payment` models with sequential invoice numbering.
 - [ ] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
 - [ ] **Day 5 — Payments & revenue dashboard.** Record payments against invoices, outstanding-balance tracking, and dashboard upgrades: pipeline value by stage, revenue this month, unpaid invoices, overdue alerts.
@@ -93,6 +99,12 @@ Useful scripts:
    DATABASE_URL="<hosted-mysql-url>" npx prisma migrate deploy
    DATABASE_URL="<hosted-mysql-url>" SEED_ADMIN_EMAIL=... SEED_ADMIN_PASSWORD=... npx prisma db seed
    ```
+
+## How proposal sharing works
+
+Marking a proposal as sent mints a random 32-character token and exposes the quote at `/p/<token>`. That URL is the only credential, so it is treated accordingly: the page is excluded from the auth gate but reveals nothing beyond the single document — no navigation into the CRM, no customer record — and is marked `noindex`. Returning a proposal to draft clears the token, so the old link dies rather than silently showing a revised quote.
+
+Sent proposals are locked against editing, enforced in the server action rather than only hidden in the UI. Acceptance asks the client to type their name, stored alongside the timestamp as the record of who agreed. Email delivery lands on day 8; until then, copy the link from the proposal page and send it yourself.
 
 ## Password resets without email
 

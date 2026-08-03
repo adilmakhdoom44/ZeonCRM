@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney, totals } from "@/lib/money";
+import { effectiveStatus } from "@/lib/proposals";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -19,6 +20,7 @@ export default async function ProposalsPage() {
 
   const rows = proposals.map((p) => ({
     ...p,
+    status: effectiveStatus(p),
     total: totals(
       p.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
       Number(p.taxRate),

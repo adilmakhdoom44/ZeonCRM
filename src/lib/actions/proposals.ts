@@ -197,7 +197,10 @@ export async function respondToProposalAction(
     },
   });
 
-  refreshProposals(proposal.id, token);
+  // Deliberately no revalidatePath here: any revalidation re-renders the page the
+  // action was called from, which would swap out the client's confirmation panel
+  // before they read it. The CRM user is in a different browser, so their pages
+  // re-render on their own next request regardless.
   return { ok: true as const };
 }
 
