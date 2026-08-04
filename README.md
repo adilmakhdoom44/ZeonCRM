@@ -107,6 +107,10 @@ Marking a proposal as sent mints a random 32-character token and exposes the quo
 
 Sent proposals are locked against editing, enforced in the server action rather than only hidden in the UI. Acceptance asks the client to type their name, stored alongside the timestamp as the record of who agreed. Email delivery lands on day 8; until then, copy the link from the proposal page and send it yourself.
 
+## Migrations in production
+
+Vercel runs `vercel-build` in preference to `build`, so deploys apply `prisma migrate deploy` before building. CI keeps using plain `build` with a dummy `DATABASE_URL` — it has no database to migrate and should never try to reach one.
+
 ## From quote to work
 
 An accepted proposal carries a **Create project** action. It opens the project at the quoted total — tax included, since that is what the client agreed to pay — starting in **Confirmed** with each line item as a step to tick off, then drops you on the board with that card already open.
