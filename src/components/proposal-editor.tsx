@@ -28,6 +28,8 @@ export type EditorProposal = {
   respondedByName: string | null;
   respondedAt: string | null;
   declineNote: string | null;
+  /** Set once the proposal has been turned into a project. */
+  projectId: string | null;
   title: string;
   customerId: string;
   summary: string;
@@ -184,6 +186,7 @@ export function ProposalEditor({
         respondedByName={proposal.respondedByName}
         respondedAt={proposal.respondedAt}
         declineNote={proposal.declineNote}
+        projectId={proposal.projectId}
       />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">

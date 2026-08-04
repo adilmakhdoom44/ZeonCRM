@@ -8,6 +8,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { isAwaitingResponse, isEditable } from "@/lib/proposals";
+import { totals } from "@/lib/money";
 
 const itemSchema = z.object({
   description: z.string().trim().max(500),
@@ -202,6 +203,64 @@ export async function respondToProposalAction(
   // before they read it. The CRM user is in a different browser, so their pages
   // re-render on their own next request regardless.
   return { ok: true as const };
+}
+
+/**
+ * Turns a won quote into the work itself: the project starts CONFIRMED at the
+ * quoted total, with each line item pre-filled as a step. Guarded on ACCEPTED
+ * and on not already having a project, so a double-submit cannot bill twice.
+ */
+export async function convertProposalToProjectAction(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id"));
+
+  const proposal = await prisma.proposal.findUnique({
+    where: { id },
+    include: { items: { orderBy: { position: "asc" } } },
+  });
+  if (!proposal || proposal.status !== "ACCEPTED" || proposal.projectId) {
+    redirect(`/proposals/${id}`);
+  }
+
+  const { total } = totals(
+    proposal.items.map((item) => ({
+      quantity: Number(item.quantity),
+      unitPrice: Number(item.unitPrice),
+    })),
+    Number(proposal.taxRate),
+  );
+
+  const steps = proposal.items
+    .map((item) => item.description.trim())
+    .filter(Boolean)
+    .map((title) => ({ title }));
+
+  const project = await prisma.$transaction(async (tx) => {
+    const created = await tx.project.create({
+      data: {
+        customerId: proposal.customerId,
+        name: proposal.title,
+        description: proposal.summary,
+        stage: "CONFIRMED",
+        // The contract value is what the client agreed to pay — tax included.
+        price: total,
+        startDate: new Date(),
+        tasks: { create: steps },
+      },
+    });
+
+    await tx.proposal.update({
+      where: { id },
+      data: { projectId: created.id, convertedAt: new Date() },
+    });
+
+    return created;
+  });
+
+  refreshProposals(id, proposal.shareToken);
+  revalidatePath("/projects");
+  revalidatePath("/dashboard");
+  redirect(`/projects?focus=${project.id}`);
 }
 
 export async function deleteProposalAction(formData: FormData) {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import {
+  convertProposalToProjectAction,
   markProposalSentAction,
   revertProposalToDraftAction,
 } from "@/lib/actions/proposals";
@@ -67,6 +68,7 @@ export function ProposalLifecycle({
   respondedByName,
   respondedAt,
   declineNote,
+  projectId,
 }: {
   id: string;
   status: string;
@@ -76,6 +78,7 @@ export function ProposalLifecycle({
   respondedByName: string | null;
   respondedAt: string | null;
   declineNote: string | null;
+  projectId: string | null;
 }) {
   const previewLink = (
     <Link href={`/proposals/${id}/print`} className={secondaryBtn}>
@@ -152,10 +155,33 @@ export function ProposalLifecycle({
               {respondedAt && <> on {dateFmt.format(new Date(respondedAt))}</>}
             </p>
             <p className="mt-0.5 text-sm text-emerald-700">
-              Time to get started — converting this into a project lands tomorrow.
+              {projectId ? (
+                <>
+                  Running as a project —{" "}
+                  <Link
+                    href={`/projects?focus=${projectId}`}
+                    className="font-medium text-emerald-800 underline underline-offset-2"
+                  >
+                    open it on the board
+                  </Link>
+                  .
+                </>
+              ) : (
+                <>Time to get started — turn it into a project with the quoted price and steps.</>
+              )}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">{previewLink}</div>
+          <div className="flex flex-wrap gap-2">
+            {previewLink}
+            {!projectId && (
+              <form action={convertProposalToProjectAction}>
+                <input type="hidden" name="id" value={id} />
+                <SubmitButton className="inline-flex items-center justify-center rounded-lg bg-emerald-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700">
+                  Create project
+                </SubmitButton>
+              </form>
+            )}
+          </div>
         </div>
       </section>
     );

@@ -38,6 +38,7 @@ export default async function ProposalPage({ params }: { params: Promise<{ id: s
     respondedByName: proposal.respondedByName,
     respondedAt: proposal.respondedAt?.toISOString() ?? null,
     declineNote: proposal.declineNote,
+    projectId: proposal.projectId,
     title: proposal.title,
     customerId: proposal.customerId,
     summary: proposal.summary ?? "",

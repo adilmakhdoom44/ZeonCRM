@@ -439,8 +439,16 @@ function ProjectOverlay({
   );
 }
 
-export function KanbanBoard({ projects }: { projects: KanbanProject[] }) {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+export function KanbanBoard({
+  projects,
+  focusId,
+}: {
+  projects: KanbanProject[];
+  focusId?: string;
+}) {
+  // Opening straight onto a card lets other pages (a converted proposal, say)
+  // hand the user to the project they just created.
+  const [selectedId, setSelectedId] = useState<string | null>(focusId ?? null);
   const [, startTransition] = useTransition();
   // Cards move instantly; the optimistic state reverts to server data once the
   // action's revalidation lands, so it can never mask fresher server state.

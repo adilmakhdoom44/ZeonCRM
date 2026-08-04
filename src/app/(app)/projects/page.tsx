@@ -3,8 +3,13 @@ import { requireUser } from "@/lib/authz";
 import { LinkButton, PageHeader } from "@/components/ui";
 import { KanbanBoard, KanbanProject } from "@/components/kanban";
 
-export default async function ProjectsPage() {
+export default async function ProjectsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ focus?: string }>;
+}) {
   await requireUser();
+  const { focus } = await searchParams;
 
   const projects = await prisma.project.findMany({
     orderBy: [{ dueDate: "asc" }, { updatedAt: "desc" }],
@@ -34,7 +39,7 @@ export default async function ProjectsPage() {
         description="Drag projects between stages, click a card for details."
         action={<LinkButton href="/projects/new">+ New project</LinkButton>}
       />
-      <KanbanBoard projects={board} />
+      <KanbanBoard projects={board} focusId={focus} />
     </div>
   );
 }
