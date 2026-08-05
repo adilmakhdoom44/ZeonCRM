@@ -7,6 +7,7 @@ import {
   markProposalSentAction,
   revertProposalToDraftAction,
 } from "@/lib/actions/proposals";
+import { createInvoiceFromProposalAction } from "@/lib/actions/invoices";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -173,6 +174,10 @@ export function ProposalLifecycle({
           </div>
           <div className="flex flex-wrap gap-2">
             {previewLink}
+            <form action={createInvoiceFromProposalAction}>
+              <input type="hidden" name="proposalId" value={id} />
+              <SubmitButton className={secondaryBtn}>Create invoice</SubmitButton>
+            </form>
             {!projectId && (
               <form action={convertProposalToProjectAction}>
                 <input type="hidden" name="id" value={id} />

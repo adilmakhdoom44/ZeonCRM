@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney } from "@/lib/money";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoices";
-import { Badge, Card, EmptyState, PageHeader } from "@/components/ui";
+import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -39,6 +39,7 @@ export default async function InvoicesPage() {
       <PageHeader
         title="Invoices"
         description="What you have billed, and what is still owed."
+        action={<LinkButton href="/invoices/new">+ New invoice</LinkButton>}
       />
 
       {rows.length > 0 && (
@@ -68,7 +69,8 @@ export default async function InvoicesPage() {
         {rows.length === 0 ? (
           <EmptyState
             title="No invoices yet"
-            hint="Raising invoices from a project or an accepted quote lands with the invoice editor."
+            hint="Bill a customer directly, or raise one from a project or an accepted quote."
+            action={<LinkButton href="/invoices/new">+ New invoice</LinkButton>}
           />
         ) : (
           <table className="w-full text-left text-sm">
@@ -86,8 +88,13 @@ export default async function InvoicesPage() {
             <tbody className="divide-y divide-slate-100">
               {rows.map((invoice) => (
                 <tr key={invoice.id} className="transition-colors hover:bg-slate-50">
-                  <td className="px-5 py-3 font-medium tabular-nums text-slate-900">
-                    {invoice.number}
+                  <td className="px-5 py-3">
+                    <Link
+                      href={`/invoices/${invoice.id}`}
+                      className="font-medium tabular-nums text-slate-900 hover:text-brand-600"
+                    >
+                      {invoice.number}
+                    </Link>
                   </td>
                   <td className="px-5 py-3 text-slate-700">{invoice.title}</td>
                   <td className="px-5 py-3 text-slate-500">

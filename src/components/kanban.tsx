@@ -10,6 +10,7 @@ import {
   deleteProjectTaskAction,
   deleteProjectAction,
 } from "@/lib/actions/projects";
+import { createInvoiceFromProjectAction } from "@/lib/actions/invoices";
 
 export type KanbanTask = {
   id: string;
@@ -412,6 +413,15 @@ function ProjectOverlay({
             )}
           </div>
           <div className="flex items-center gap-3">
+            <form action={createInvoiceFromProjectAction}>
+              <input type="hidden" name="projectId" value={project.id} />
+              <button
+                disabled={isPending}
+                className="text-sm font-medium text-slate-500 hover:text-brand-600 disabled:opacity-50"
+              >
+                Invoice this
+              </button>
+            </form>
             <Link
               href={`/projects/${project.id}/edit`}
               className="text-sm font-medium text-slate-500 hover:text-brand-600"
