@@ -182,6 +182,68 @@ export async function saveInvoiceAction(id: string, payload: InvoicePayload) {
   return { ok: true as const };
 }
 
+/** Issues the invoice: it is now a claim on the customer, so editing closes. */
+export async function markInvoiceSentAction(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id"));
+
+  const invoice = await prisma.invoice.findUnique({ where: { id }, select: { status: true } });
+  if (!invoice || invoice.status !== "DRAFT") return;
+
+  await prisma.invoice.update({
+    where: { id },
+    data: { status: "SENT", sentAt: new Date() },
+  });
+  refreshInvoices(id);
+}
+
+/**
+ * Back to draft to correct a mistake. Refused once money has arrived against it —
+ * at that point the figures are part of a settled record, not a draft.
+ */
+export async function revertInvoiceToDraftAction(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id"));
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id },
+    select: { _count: { select: { payments: true } } },
+  });
+  if (!invoice || invoice._count.payments > 0) return;
+
+  await prisma.invoice.update({
+    where: { id },
+    data: { status: "DRAFT", sentAt: null },
+  });
+  refreshInvoices(id);
+}
+
+/** Written off rather than deleted — the number stays used and the history stays honest. */
+export async function cancelInvoiceAction(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id"));
+
+  await prisma.invoice.update({ where: { id }, data: { status: "CANCELLED" } });
+  refreshInvoices(id);
+}
+
+export async function reopenInvoiceAction(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id"));
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id },
+    select: { sentAt: true },
+  });
+  if (!invoice) return;
+
+  await prisma.invoice.update({
+    where: { id },
+    data: { status: invoice.sentAt ? "SENT" : "DRAFT" },
+  });
+  refreshInvoices(id);
+}
+
 export async function deleteInvoiceAction(formData: FormData) {
   await requireUser();
   const id = String(formData.get("id"));
