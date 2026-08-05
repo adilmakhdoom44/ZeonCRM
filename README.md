@@ -14,6 +14,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Client acceptance without an account** — customers open the share link, read a print-ready quote and accept or decline by typing their name, which is recorded with the timestamp. Returning a proposal to draft revokes the old link
 - **Won quotes become projects** — one click turns an accepted proposal into a confirmed project at the quoted total, with every line item pre-filled as a step, and links the two so the quote always points at the work it paid for
 - **Projects** — Kanban pipeline built for fixed-price service work: drag projects across Quoted → Confirmed → In progress → Review → Completed/Cancelled, click a card for an overlay with price, deadline, step checklist and complete/cancel actions
+- **Invoices** — bill a customer directly, or raise an invoice from a project at its agreed price or from an accepted quote line for line, with sequential `INV-0001` numbering, live totals and a print-ready document
+- **Knowing what you are owed** — outstanding and overdue totals across the whole list, with each invoice's status derived from its payments and due date rather than trusted from a stored column
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
@@ -38,7 +40,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 1 — Proposal builder (schema + editor).** `Proposal` + `ProposalItem` models linked to customers: line items with quantity × unit price, subtotal/tax/total, draft status, and a clean editor UI to compose proposals.
 - [x] **Day 2 — Proposal lifecycle & sharing.** Statuses (draft → sent → accepted / declined / expired), a print-ready proposal view, and a public tokenized share link so a client can view and accept or decline online — no login needed.
 - [x] **Day 3 — Proposal → project conversion & billing schema.** One click turns an accepted proposal into a project (price, steps pre-filled from line items). `Invoice`, `InvoiceItem` and `Payment` models with sequential invoice numbering.
-- [ ] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
+- [x] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
 - [ ] **Day 5 — Payments & revenue dashboard.** Record payments against invoices, outstanding-balance tracking, and dashboard upgrades: pipeline value by stage, revenue this month, unpaid invoices, overdue alerts.
 - [ ] **Day 6 — Activity timeline & notes.** Log calls, meetings and notes on customers and contacts; unified per-customer timeline; follow-up reminders with a "due today" list on the dashboard.
 - [ ] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
@@ -118,6 +120,14 @@ An accepted proposal carries a **Create project** action. It opens the project a
 The link is one-to-one and one-way: a proposal can only be won once (a double submit hits the same guard the UI does), and the project keeps its own life afterwards — editing the project never rewrites the quote it came from. If a project is deleted the proposal survives as the record of what was quoted.
 
 Invoices, line items and payments now exist in the schema with sequential `INV-0001` numbering, and are wired to both projects and proposals ready for day 4. Billing history deliberately outlives its origin: deleting a project or proposal nulls the link rather than removing the invoice.
+
+## How invoice status works
+
+An invoice stores a status, but the app does not simply trust it. Every view derives what an invoice *actually* reads as from two facts it cannot argue with: what has been paid against it, and whether its due date has passed. Payments that cover the total make it **Paid** with no action needed; anything unpaid past its due date is **Overdue** whatever the column says. No nightly job flips states, so nothing can drift.
+
+Payments are summed rather than kept as a running balance, so correcting or removing one can never leave an invoice disagreeing with its own receipts. Outstanding totals exclude drafts — they have not been asked for yet — and cancelled invoices, which are not debts.
+
+Only drafts can be edited. Issuing an invoice locks the figures, and returning it to draft is refused once any payment has arrived, since by then the numbers are part of a settled record. Cancelling writes an invoice off rather than deleting it, so its number stays used and the sequence has no gaps.
 
 ## Password resets without email
 
