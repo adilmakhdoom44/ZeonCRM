@@ -6,6 +6,7 @@ import { formatMoney, lineTotal, totals } from "@/lib/money";
 import { deleteInvoiceAction, saveInvoiceAction } from "@/lib/actions/invoices";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { InvoiceLifecycle } from "@/components/invoice-lifecycle";
+import { InvoicePayments, EditorPayment } from "@/components/invoice-payments";
 
 export type EditorItem = {
   description: string;
@@ -29,6 +30,7 @@ export type EditorInvoice = {
   sentAt: string | null;
   paid: number;
   hasPayments: boolean;
+  payments: EditorPayment[];
   /** Where the invoice came from, if it was raised off existing work. */
   projectId: string | null;
   projectName: string | null;
@@ -301,6 +303,18 @@ export function InvoiceEditor({
               />
             </div>
           </Card>
+
+          <InvoicePayments
+            invoiceId={invoice.id}
+            payments={invoice.payments}
+            balance={balance}
+            canRecord={invoice.status !== "DRAFT" && invoice.status !== "CANCELLED"}
+            blockedReason={
+              invoice.status === "DRAFT"
+                ? "Mark this invoice as sent before recording a payment against it."
+                : "This invoice has been cancelled — nothing is payable against it."
+            }
+          />
         </div>
 
         <div className="space-y-6 lg:sticky lg:top-20">

@@ -13,7 +13,7 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
       where: { id },
       include: {
         items: { orderBy: { position: "asc" } },
-        payments: { select: { amount: true } },
+        payments: { orderBy: { receivedAt: "desc" } },
         project: { select: { name: true } },
         proposal: { select: { number: true } },
       },
@@ -44,6 +44,14 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     sentAt: invoice.sentAt?.toISOString() ?? null,
     paid: money.paid,
     hasPayments: invoice.payments.length > 0,
+    payments: invoice.payments.map((payment) => ({
+      id: payment.id,
+      amount: Number(payment.amount),
+      method: payment.method,
+      reference: payment.reference,
+      receivedAt: payment.receivedAt.toISOString(),
+      note: payment.note,
+    })),
     projectId: invoice.projectId,
     projectName: invoice.project?.name ?? null,
     proposalId: invoice.proposalId,
