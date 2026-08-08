@@ -57,6 +57,13 @@ enum PaymentMethod {
   OTHER
 }
 
+enum ActivityType {
+  NOTE
+  CALL
+  MEETING
+  EMAIL
+}
+
 enum ProjectStage {
   QUOTED
   CONFIRMED
@@ -77,6 +84,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   resetTokens PasswordResetToken[]
+  activities  Activity[]
 }
 
 model PasswordResetToken {
@@ -105,8 +113,9 @@ model Customer {
   contacts  Contact[]
   addresses Address[]
   projects  Project[]
-  proposals Proposal[]
-  invoices  Invoice[]
+  proposals  Proposal[]
+  invoices   Invoice[]
+  activities Activity[]
 
   @@index([name])
 }
@@ -122,9 +131,10 @@ model Contact {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  customer Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  phones   ContactPhone[]
-  emails   ContactEmail[]
+  customer   Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  phones     ContactPhone[]
+  emails     ContactEmail[]
+  activities Activity[]
 
   @@index([customerId])
 }
@@ -180,10 +190,11 @@ model Project {
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @updatedAt
 
-  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  tasks    ProjectTask[]
-  proposal Proposal?
-  invoices Invoice[]
+  customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tasks      ProjectTask[]
+  proposal   Proposal?
+  invoices   Invoice[]
+  activities Activity[]
 
   @@index([customerId])
   @@index([stage])
@@ -237,6 +248,38 @@ model ProposalItem {
   proposal Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
 
   @@index([proposalId])
+}
+
+/**
+ * What happened with an account, and what is owed back. Everything hangs off the
+ * customer; the contact and project are optional narrowing, and they null out on
+ * delete rather than taking the history with them.
+ */
+model Activity {
+  id         String       @id @default(cuid())
+  customerId String
+  contactId  String?
+  projectId  String?
+  userId     String?
+  type       ActivityType @default(NOTE)
+  subject    String
+  body       String?      @db.Text
+  occurredAt DateTime     @default(now())
+  // A follow-up is just an activity that points at a future date until it is done.
+  followUpAt     DateTime?
+  followUpDoneAt DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  contact  Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  project  Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([customerId])
+  @@index([contactId])
+  @@index([projectId])
+  @@index([followUpAt])
 }
 
 model Invoice {
