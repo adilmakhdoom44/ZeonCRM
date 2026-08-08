@@ -24,7 +24,11 @@ export default async function DashboardPage() {
   const user = await requireUser();
   const now = new Date();
 
-  const [monthPayments, liveInvoices, openProjects, recentCustomers, upcomingProjects] =
+  // Anything due by the end of today, plus anything already missed.
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
+
+  const [monthPayments, liveInvoices, openProjects, recentCustomers, upcomingProjects, followUps] =
     await Promise.all([
       prisma.payment.findMany({
         where: { receivedAt: { gte: startOfMonth(now) } },
@@ -53,6 +57,11 @@ export default async function DashboardPage() {
         where: { stage: { in: [...OPEN_STAGES] } },
         orderBy: [{ dueDate: "asc" }],
         take: 5,
+        include: { customer: { select: { id: true, name: true } } },
+      }),
+      prisma.activity.findMany({
+        where: { followUpDoneAt: null, followUpAt: { not: null, lte: endOfToday } },
+        orderBy: { followUpAt: "asc" },
         include: { customer: { select: { id: true, name: true } } },
       }),
     ]);
@@ -225,6 +234,49 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader
+            title="Follow-ups due"
+            description="Anything you said you would come back to, by today."
+          />
+          {followUps.length === 0 ? (
+            <EmptyState
+              title="Nothing due today"
+              hint="Follow-ups you set on a customer's activity show up here on the day."
+            />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {followUps.map((activity) => {
+                const overdueFollowUp = activity.followUpAt! < startOfToday;
+                return (
+                  <li key={activity.id}>
+                    <Link
+                      href={`/customers/${activity.customer.id}`}
+                      className="flex items-center justify-between px-5 py-3 transition-colors hover:bg-slate-50"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-slate-900">
+                          {activity.subject}
+                        </p>
+                        <p className="text-xs text-slate-500">{activity.customer.name}</p>
+                      </div>
+                      <span
+                        className={`ml-4 shrink-0 text-xs font-medium ${
+                          overdueFollowUp ? "text-red-600" : "text-amber-600"
+                        }`}
+                      >
+                        {overdueFollowUp
+                          ? `missed ${dateFmt.format(activity.followUpAt!)}`
+                          : "today"}
+                      </span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Card>
+
         <Card>
           <CardHeader title="Recent customers" />
           {recentCustomers.length === 0 ? (

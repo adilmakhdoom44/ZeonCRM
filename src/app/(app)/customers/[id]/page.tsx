@@ -11,6 +11,7 @@ import {
   deleteEmailAction,
 } from "@/lib/actions/contacts";
 import { createAddressAction, deleteAddressAction } from "@/lib/actions/addresses";
+import { ActivityTimeline, TimelineActivity } from "@/components/activity-timeline";
 import { Badge, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const inputCls =
@@ -45,9 +46,33 @@ export default async function CustomerDetailPage({
       },
       addresses: true,
       projects: { orderBy: { updatedAt: "desc" } },
+      activities: {
+        // Undone follow-ups float to the top — they are the part that needs doing.
+        orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
+        include: {
+          contact: { select: { firstName: true, lastName: true } },
+          project: { select: { name: true } },
+          user: { select: { name: true } },
+        },
+      },
     },
   });
   if (!customer) notFound();
+
+  const timeline: TimelineActivity[] = customer.activities.map((activity) => ({
+    id: activity.id,
+    type: activity.type,
+    subject: activity.subject,
+    body: activity.body,
+    occurredAt: activity.occurredAt.toISOString(),
+    followUpAt: activity.followUpAt?.toISOString() ?? null,
+    followUpDoneAt: activity.followUpDoneAt?.toISOString() ?? null,
+    contactName: activity.contact
+      ? `${activity.contact.firstName} ${activity.contact.lastName}`
+      : null,
+    projectName: activity.project?.name ?? null,
+    userName: activity.user?.name ?? null,
+  }));
 
   const newContact = createContactAction.bind(null, id);
   const newAddress = createAddressAction.bind(null, id);
@@ -80,6 +105,16 @@ export default async function CustomerDetailPage({
       )}
 
       <div className="space-y-6">
+        <ActivityTimeline
+          customerId={id}
+          activities={timeline}
+          contacts={customer.contacts.map((c) => ({
+            id: c.id,
+            name: `${c.firstName} ${c.lastName}`,
+          }))}
+          projects={customer.projects.map((p) => ({ id: p.id, name: p.name }))}
+        />
+
         {/* Contacts */}
         <Card>
           <CardHeader
