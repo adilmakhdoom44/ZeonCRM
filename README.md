@@ -20,6 +20,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Dashboard that answers the money questions** — revenue received this month, outstanding, overdue and pipeline value, plus the pipeline broken down by stage, the invoices soonest due, and an alert when anything is past its date
 - **Activity timeline** — log calls, meetings, notes and emails against an account in one line, optionally tied to the person and the project they concerned, with who logged it and when
 - **Follow-ups that chase you** — put a date on any entry and it stays flagged until done; the dashboard lists everything due today and everything already missed
+- **Search everything** — one box in the header covering customers, contacts, projects, quotes and invoices, matching names, industries, email addresses, phone numbers and document numbers like `PRO-0001`, with results grouped by kind
+- **Tags & saved views** — label accounts however you segment them, filter the list by tag and status, then save that filter under a name and come back to it
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
@@ -47,7 +49,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 4 — Invoicing.** Create invoices from a project or proposal, invoice list + detail pages, statuses (draft / sent / paid / partially paid / overdue), print-ready invoice view with company details.
 - [x] **Day 5 — Payments & revenue dashboard.** Record payments against invoices, outstanding-balance tracking, and dashboard upgrades: pipeline value by stage, revenue this month, unpaid invoices, overdue alerts.
 - [x] **Day 6 — Activity timeline & notes.** Log calls, meetings and notes on customers and contacts; unified per-customer timeline; follow-up reminders with a "due today" list on the dashboard.
-- [ ] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
+- [x] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
 - [ ] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
 - [ ] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
 - [ ] **Day 10 — Settings, polish & release.** Company profile (name, logo, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, empty-state polish, then production deploy and end-to-end smoke test.
