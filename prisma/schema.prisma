@@ -85,6 +85,35 @@ model User {
 
   resetTokens PasswordResetToken[]
   activities  Activity[]
+  savedViews  SavedView[]
+}
+
+/** A label you can hang on any number of accounts and then filter by. */
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  color     String   @default("slate")
+  createdAt DateTime @default(now())
+
+  customers Customer[]
+}
+
+/**
+ * A filter combination someone wants back later. The query string is stored
+ * verbatim rather than as columns, so adding a new filter to the customer list
+ * never needs a migration here.
+ */
+model SavedView {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  query     String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId])
 }
 
 model PasswordResetToken {
@@ -116,6 +145,7 @@ model Customer {
   proposals  Proposal[]
   invoices   Invoice[]
   activities Activity[]
+  tags       Tag[]
 
   @@index([name])
 }
