@@ -27,7 +27,7 @@ async function main() {
     return;
   }
 
-  await prisma.customer.create({
+  const northwind = await prisma.customer.create({
     data: {
       name: "Northwind Traders",
       industry: "Wholesale & Distribution",
@@ -223,7 +223,95 @@ async function main() {
     },
   });
 
-  console.log("Seeded 3 sample customers and 2 proposals.");
+  // Tags — colours match src/lib/tags.ts so seeded tags look like created ones.
+  const tagColor = (name: string) => {
+    const palette = ["slate", "brand", "emerald", "amber", "violet", "sky", "red"];
+    let hash = 0;
+    for (const char of name.toLowerCase()) hash = (hash * 31 + char.charCodeAt(0)) % 100_000;
+    return palette[hash % palette.length];
+  };
+
+  for (const [name, customerIds] of [
+    ["enterprise", [northwind.id, atlas.id]],
+    ["healthcare", [beacon.id]],
+    ["construction", [atlas.id]],
+  ] as const) {
+    await prisma.tag.create({
+      data: {
+        name,
+        color: tagColor(name),
+        customers: { connect: customerIds.map((id) => ({ id })) },
+      },
+    });
+  }
+
+  const daysFromNow = (days: number) => new Date(Date.now() + days * 86_400_000);
+
+  // An invoice part paid and past due, so the dashboard has something to warn about.
+  const overdueInvoice = await prisma.invoice.create({
+    data: {
+      number: "INV-0001",
+      customerId: beacon.id,
+      title: "Care pathway portal — milestone 1",
+      status: "PARTIALLY_PAID",
+      taxRate: 8.5,
+      dueDate: daysFromNow(-6),
+      terms: "Payable within 30 days by bank transfer.",
+      items: {
+        create: [{ description: "Milestone 1 — discovery & design", quantity: 1, unitPrice: 4000, position: 0 }],
+      },
+      payments: {
+        create: [{ amount: 1500, method: "BANK_TRANSFER", reference: "TRF-4471", receivedAt: daysFromNow(-12) }],
+      },
+    },
+  });
+
+  // One settled in full, so "paid" is represented too.
+  await prisma.invoice.create({
+    data: {
+      number: "INV-0002",
+      customerId: northwind.id,
+      title: "Inventory portal revamp — deposit",
+      status: "PAID",
+      paidAt: daysFromNow(-3),
+      dueDate: daysFromNow(-1),
+      items: { create: [{ description: "50% deposit", quantity: 1, unitPrice: 3200, position: 0 }] },
+      payments: { create: [{ amount: 3200, method: "CARD", receivedAt: daysFromNow(-3) }] },
+    },
+  });
+
+  await prisma.activity.createMany({
+    data: [
+      {
+        customerId: northwind.id,
+        userId: admin.id,
+        type: "CALL",
+        subject: "Quarterly review — renewal intent",
+        body: "Happy with delivery. Wants a proposal for phase 2 before the budget round.",
+        occurredAt: daysFromNow(-4),
+      },
+      {
+        customerId: beacon.id,
+        userId: admin.id,
+        type: "EMAIL",
+        subject: "Chased milestone 1 invoice",
+        body: `Reminder sent about ${overdueInvoice.number}.`,
+        occurredAt: daysFromNow(-5),
+        followUpAt: daysFromNow(-1),
+      },
+      {
+        customerId: atlas.id,
+        userId: admin.id,
+        type: "MEETING",
+        subject: "Site walkthrough",
+        body: "Toured two active sites. Tracker needs to work offline in the basement levels.",
+        occurredAt: daysFromNow(-2),
+        followUpAt: daysFromNow(3),
+      },
+    ],
+  });
+
+  console.log("Seeded 3 customers, 2 proposals, 3 tags, 2 invoices with payments, and 3 activities.");
 }
 
 main()
