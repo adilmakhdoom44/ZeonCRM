@@ -47,7 +47,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             )}
           </nav>
 
-          <div className="ml-auto flex items-center gap-3">
+          <form action="/search" className="ml-auto hidden md:block">
+            <input
+              type="search"
+              name="q"
+              placeholder="Search everything…"
+              aria-label="Search"
+              className="w-52 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:w-64 focus:border-brand-500 focus:outline-none"
+            />
+          </form>
+
+          <div className="ml-auto flex items-center gap-3 md:ml-0">
             <span className="hidden text-sm text-slate-300 md:block">{user.name}</span>
             <span
               className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-700 text-xs font-semibold text-white"
