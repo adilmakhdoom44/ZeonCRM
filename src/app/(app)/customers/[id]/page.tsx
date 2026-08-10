@@ -12,6 +12,8 @@ import {
 } from "@/lib/actions/contacts";
 import { createAddressAction, deleteAddressAction } from "@/lib/actions/addresses";
 import { ActivityTimeline, TimelineActivity } from "@/components/activity-timeline";
+import { addTagToCustomerAction, removeTagFromCustomerAction } from "@/lib/actions/tags";
+import { tagChipClass } from "@/lib/tags";
 import { Badge, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const inputCls =
@@ -45,6 +47,7 @@ export default async function CustomerDetailPage({
         include: { phones: true, emails: true },
       },
       addresses: true,
+      tags: { orderBy: { name: "asc" } },
       projects: { orderBy: { updatedAt: "desc" } },
       activities: {
         // Undone follow-ups float to the top — they are the part that needs doing.
@@ -76,6 +79,7 @@ export default async function CustomerDetailPage({
 
   const newContact = createContactAction.bind(null, id);
   const newAddress = createAddressAction.bind(null, id);
+  const newTag = addTagToCustomerAction.bind(null, id);
 
   return (
     <div>
@@ -97,6 +101,38 @@ export default async function CustomerDetailPage({
           </div>
         }
       />
+
+      <div className="mb-6 flex flex-wrap items-center gap-2">
+        {customer.tags.map((tag) => (
+          <span
+            key={tag.id}
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${tagChipClass(tag.color)}`}
+          >
+            <Link href={`/customers?tag=${encodeURIComponent(tag.name)}`} className="hover:underline">
+              {tag.name}
+            </Link>
+            <form action={removeTagFromCustomerAction} className="flex">
+              <input type="hidden" name="customerId" value={id} />
+              <input type="hidden" name="tagId" value={tag.id} />
+              <button
+                className="opacity-50 transition-opacity hover:opacity-100"
+                title={`Remove ${tag.name}`}
+                aria-label={`Remove ${tag.name}`}
+              >
+                ✕
+              </button>
+            </form>
+          </span>
+        ))}
+        <form action={newTag} className="flex items-center gap-2">
+          <input
+            name="name"
+            placeholder="+ Add tag"
+            aria-label="Add tag"
+            className="w-28 rounded-full border border-dashed border-slate-300 bg-transparent px-2.5 py-0.5 text-xs text-slate-600 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none"
+          />
+        </form>
+      </div>
 
       {customer.notes && (
         <Card className="mb-6 px-5 py-4">

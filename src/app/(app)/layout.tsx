@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       <header className="sticky top-0 z-40 border-b border-ink-700 bg-ink-900">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
-          <Link href="/dashboard" className="flex items-center gap-2.5">
+          <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
             <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">
               Z
             </span>
@@ -27,7 +27,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-1">
+          <nav className="flex shrink-0 items-center gap-1">
             {nav.map((item) => (
               <Link
                 key={item.href}
@@ -47,17 +47,17 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             )}
           </nav>
 
-          <form action="/search" className="ml-auto hidden md:block">
+          <form action="/search" className="ml-auto hidden min-w-0 lg:block">
             <input
               type="search"
               name="q"
               placeholder="Search everything…"
               aria-label="Search"
-              className="w-52 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:w-64 focus:border-brand-500 focus:outline-none"
+              className="w-44 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-sm text-white transition-[width] placeholder:text-slate-500 focus:w-56 focus:border-brand-500 focus:outline-none"
             />
           </form>
 
-          <div className="ml-auto flex items-center gap-3 md:ml-0">
+          <div className="ml-auto flex shrink-0 items-center gap-3 lg:ml-0">
             <span className="hidden text-sm text-slate-300 md:block">{user.name}</span>
             <span
               className="flex h-8 w-8 items-center justify-center rounded-full bg-ink-700 text-xs font-semibold text-white"
@@ -71,7 +71,7 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 .toUpperCase()}
             </span>
             <form action={logoutAction}>
-              <button className="rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-ink-700 hover:text-white">
+              <button className="whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-medium text-slate-400 transition-colors hover:bg-ink-700 hover:text-white">
                 Sign out
               </button>
             </form>
