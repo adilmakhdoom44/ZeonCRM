@@ -8,6 +8,8 @@ import {
   reopenInvoiceAction,
   revertInvoiceToDraftAction,
 } from "@/lib/actions/invoices";
+import { emailInvoiceAction } from "@/lib/actions/send";
+import { SendButton } from "@/components/send-button";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -78,12 +80,13 @@ export function InvoiceLifecycle({
               Marking it sent locks the figures and starts the clock on the due date.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {previewLink}
-            <ActionForm
-              action={markInvoiceSentAction}
+            <ActionForm action={markInvoiceSentAction} id={id} label="Mark as sent" />
+            <SendButton
+              action={emailInvoiceAction}
               id={id}
-              label="Mark as sent"
+              label="Email to client"
               className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
             />
           </div>
@@ -185,8 +188,14 @@ export function InvoiceLifecycle({
             Editing is locked while the customer has it.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-start gap-2">
           {previewLink}
+          <SendButton
+            action={emailInvoiceAction}
+            id={id}
+            label="Resend email"
+            className={secondaryBtn}
+          />
           {/* Once money has arrived the figures are part of a settled record. */}
           {!hasPayments && (
             <ActionForm action={revertInvoiceToDraftAction} id={id} label="Return to draft" />

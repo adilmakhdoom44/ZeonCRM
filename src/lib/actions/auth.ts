@@ -6,6 +6,7 @@ import { AuthError } from "next-auth";
 import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { passwordResetEmail, sendEmail } from "@/lib/email";
 
 export async function loginAction(formData: FormData) {
   try {
@@ -49,9 +50,20 @@ export async function requestPasswordResetAction(formData: FormData) {
   if (user && user.isActive) {
     const token = await createResetToken(user.id);
     const base = process.env.AUTH_URL ?? "http://localhost:3000";
-    // No SMTP is configured, so the reset link is logged to the server console.
-    // An admin can also generate a link from Settings → Users.
-    console.log(`[Zeon CRM] Password reset link for ${email}: ${base}/reset-password/${token}`);
+    const resetUrl = `${base}/reset-password/${token}`;
+
+    const { subject, html } = passwordResetEmail({ name: user.name, resetUrl });
+    const result = await sendEmail({ to: email, subject, html });
+
+    // Without an API key sendEmail logs instead of delivering, so print the link
+    // too — otherwise a local reset would be unreachable. An admin can also
+    // generate one from Settings → Users.
+    if (!result.ok || !result.delivered) {
+      console.log(`[Zeon CRM] Password reset link for ${email}: ${resetUrl}`);
+    }
+    if (!result.ok) {
+      console.error(`[Zeon CRM] Reset email failed: ${result.error}`);
+    }
   }
 
   redirect("/forgot-password?sent=1");

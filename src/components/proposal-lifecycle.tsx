@@ -8,6 +8,8 @@ import {
   revertProposalToDraftAction,
 } from "@/lib/actions/proposals";
 import { createInvoiceFromProposalAction } from "@/lib/actions/invoices";
+import { emailProposalAction } from "@/lib/actions/send";
+import { SendButton } from "@/components/send-button";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -104,14 +106,18 @@ export function ProposalLifecycle({
               Sending creates a private link you can share with the customer.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {previewLink}
             <form action={markProposalSentAction}>
               <input type="hidden" name="id" value={id} />
-              <SubmitButton className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700">
-                Mark as sent
-              </SubmitButton>
+              <SubmitButton className={secondaryBtn}>Mark as sent</SubmitButton>
             </form>
+            <SendButton
+              action={emailProposalAction}
+              id={id}
+              label="Email to client"
+              className="inline-flex items-center justify-center rounded-lg bg-brand-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-brand-700"
+            />
           </div>
         </div>
       </section>
@@ -132,9 +138,15 @@ export function ProposalLifecycle({
               while it is out.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {previewLink}
             {revertForm("Return to draft")}
+            <SendButton
+              action={emailProposalAction}
+              id={id}
+              label="Resend email"
+              className={secondaryBtn}
+            />
           </div>
         </div>
         {shareUrl && (
