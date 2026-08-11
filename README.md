@@ -22,6 +22,7 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Follow-ups that chase you** — put a date on any entry and it stays flagged until done; the dashboard lists everything due today and everything already missed
 - **Search everything** — one box in the header covering customers, contacts, projects, quotes and invoices, matching names, industries, email addresses, phone numbers and document numbers like `PRO-0001`, with results grouped by kind
 - **Tags & saved views** — label accounts however you segment them, filter the list by tag and status, then save that filter under a name and come back to it
+- **Email that tells the truth** — send proposals, invoices and reset links from the app via Resend; every send is logged to the customer's timeline, and if no provider is configured the UI says the message was composed but not delivered rather than pretending otherwise
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
@@ -50,7 +51,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 5 — Payments & revenue dashboard.** Record payments against invoices, outstanding-balance tracking, and dashboard upgrades: pipeline value by stage, revenue this month, unpaid invoices, overdue alerts.
 - [x] **Day 6 — Activity timeline & notes.** Log calls, meetings and notes on customers and contacts; unified per-customer timeline; follow-up reminders with a "due today" list on the dashboard.
 - [x] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
-- [ ] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
+- [x] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
 - [ ] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
 - [ ] **Day 10 — Settings, polish & release.** Company profile (name, logo, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, empty-state polish, then production deploy and end-to-end smoke test.
 
@@ -134,6 +135,12 @@ An invoice stores a status, but the app does not simply trust it. Every view der
 Payments are summed rather than kept as a running balance, so correcting or removing one can never leave an invoice disagreeing with its own receipts. Recording or removing a receipt also re-derives the stored status, so the column and the page can never tell you different things. Outstanding totals exclude drafts — they have not been asked for yet — and cancelled invoices, which are not debts.
 
 Only drafts can be edited. Issuing an invoice locks the figures, and returning it to draft is refused once any payment has arrived, since by then the numbers are part of a settled record. Cancelling writes an invoice off rather than deleting it, so its number stays used and the sequence has no gaps.
+
+## Email, and what happens without it
+
+Proposals, invoices and password-reset links go out through [Resend](https://resend.com) over a plain `fetch` — one HTTP call did not justify a dependency. Set `RESEND_API_KEY` and `EMAIL_FROM` and they are delivered; sending a quote issues its share link, and sending a draft invoice issues the invoice, because a document a client has been asked to act on is no longer a draft.
+
+**With no API key the app still works.** Messages are logged to the server console instead of delivered — and the UI says exactly that, in amber, rather than showing a green tick. Every send is also written to the customer's timeline, including whether it actually left the building. Silent non-delivery is the failure mode that costs you a client, so it is the one thing this deliberately refuses to hide.
 
 ## Password resets without email
 
