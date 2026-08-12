@@ -86,6 +86,31 @@ model User {
   resetTokens PasswordResetToken[]
   activities  Activity[]
   savedViews  SavedView[]
+  customers   Customer[]
+  projects    Project[]
+  auditLogs   AuditLog[]
+}
+
+/**
+ * Who did what. Written alongside the change itself, never edited or deleted —
+ * an audit trail you can amend is not one. The actor is kept as a name as well
+ * as a relation so the record still reads correctly after someone leaves and
+ * their account is removed.
+ */
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  actorName  String
+  action     String
+  entity     String
+  entityId   String
+  summary    String
+  createdAt  DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([entity, entityId])
+  @@index([createdAt])
 }
 
 /** A label you can hang on any number of accounts and then filter by. */
@@ -136,8 +161,13 @@ model Customer {
   website   String?
   notes     String?        @db.Text
   status    CustomerStatus @default(LEAD)
+  // Who owns the relationship. Nullable: an unowned account is a real state,
+  // and losing the owner must not take the account with it.
+  ownerId   String?
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+
+  owner User? @relation(fields: [ownerId], references: [id], onDelete: SetNull)
 
   contacts  Contact[]
   addresses Address[]
@@ -213,6 +243,7 @@ model Project {
   name        String
   description String?      @db.Text
   stage       ProjectStage @default(QUOTED)
+  ownerId     String?
   price       Decimal?     @db.Decimal(12, 2)
   startDate   DateTime?
   dueDate     DateTime?
@@ -221,6 +252,7 @@ model Project {
   updatedAt   DateTime     @updatedAt
 
   customer   Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  owner      User?         @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   tasks      ProjectTask[]
   proposal   Proposal?
   invoices   Invoice[]
