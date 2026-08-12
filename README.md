@@ -23,6 +23,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Search everything** — one box in the header covering customers, contacts, projects, quotes and invoices, matching names, industries, email addresses, phone numbers and document numbers like `PRO-0001`, with results grouped by kind
 - **Tags & saved views** — label accounts however you segment them, filter the list by tag and status, then save that filter under a name and come back to it
 - **Email that tells the truth** — send proposals, invoices and reset links from the app via Resend; every send is logged to the customer's timeline, and if no provider is configured the UI says the message was composed but not delivered rather than pretending otherwise
+- **Account owners** — assign a customer or project to a teammate, see it on the list and the board, and filter to just your own with "My accounts" and "My projects"
+- **Audit log** — who changed what, admin-only, filterable by record type and linking back to the thing that changed
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
@@ -52,7 +54,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 6 — Activity timeline & notes.** Log calls, meetings and notes on customers and contacts; unified per-customer timeline; follow-up reminders with a "due today" list on the dashboard.
 - [x] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
 - [x] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
-- [ ] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
+- [x] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
 - [ ] **Day 10 — Settings, polish & release.** Company profile (name, logo, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, empty-state polish, then production deploy and end-to-end smoke test.
 
 ## Stack
@@ -141,6 +143,12 @@ Only drafts can be edited. Issuing an invoice locks the figures, and returning i
 Proposals, invoices and password-reset links go out through [Resend](https://resend.com) over a plain `fetch` — one HTTP call did not justify a dependency. Set `RESEND_API_KEY` and `EMAIL_FROM` and they are delivered; sending a quote issues its share link, and sending a draft invoice issues the invoice, because a document a client has been asked to act on is no longer a draft.
 
 **With no API key the app still works.** Messages are logged to the server console instead of delivered — and the UI says exactly that, in amber, rather than showing a green tick. Every send is also written to the customer's timeline, including whether it actually left the building. Silent non-delivery is the failure mode that costs you a client, so it is the one thing this deliberately refuses to hide.
+
+## What the audit log covers
+
+Deliberately not everything. It records the changes someone might later have to answer for: customers created, edited and deleted; projects moved between stages and deleted; payments recorded and removed; ownership reassigned. Editing a phone number is not in there, and does not need to be.
+
+Entries are written alongside the change and never updated or deleted — an audit trail you can amend is not one. The actor's name is stored on the row as well as the relation, so a record still reads correctly after that person leaves and their account is removed. Audit writes are also isolated from the change itself: if the log write fails it is reported to the server console and the actual work still stands, because losing the work to save the paperwork is the wrong trade.
 
 ## Password resets without email
 
