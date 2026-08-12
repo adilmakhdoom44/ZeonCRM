@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
+import { recordAudit } from "@/lib/audit";
 
 const STAGES = ["QUOTED", "CONFIRMED", "IN_PROGRESS", "REVIEW", "COMPLETED", "CANCELLED"] as const;
 
@@ -69,21 +70,47 @@ export async function updateProjectAction(id: string, formData: FormData) {
 }
 
 export async function deleteProjectAction(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("id"));
+
+  const project = await prisma.project.findUnique({ where: { id }, select: { name: true } });
   await prisma.project.delete({ where: { id } });
+
+  await recordAudit({
+    actor: user,
+    action: "deleted",
+    entity: "Project",
+    entityId: id,
+    summary: `Deleted ${project?.name ?? "a project"}`,
+  });
   refreshProjects();
 }
 
 export async function moveProjectStageAction(projectId: string, stage: string) {
-  await requireUser();
+  const user = await requireUser();
   const parsed = z.enum(STAGES).safeParse(stage);
   if (!parsed.success) return;
+
+  const before = await prisma.project.findUnique({
+    where: { id: projectId },
+    select: { name: true, stage: true },
+  });
 
   await prisma.project.update({
     where: { id: projectId },
     data: { stage: parsed.data, ...stageTimestamps(parsed.data) },
   });
+
+  // A drag that lands where it started is not a change worth recording.
+  if (before && before.stage !== parsed.data) {
+    await recordAudit({
+      actor: user,
+      action: "updated",
+      entity: "Project",
+      entityId: projectId,
+      summary: `Moved ${before.name} from ${before.stage.replace("_", " ").toLowerCase()} to ${parsed.data.replace("_", " ").toLowerCase()}`,
+    });
+  }
   refreshProjects();
 }
 

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { LinkButton, PageHeader } from "@/components/ui";
@@ -6,17 +7,26 @@ import { KanbanBoard, KanbanProject } from "@/components/kanban";
 export default async function ProjectsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ focus?: string }>;
+  searchParams: Promise<{ focus?: string; mine?: string }>;
 }) {
-  await requireUser();
-  const { focus } = await searchParams;
+  const user = await requireUser();
+  const { focus, mine } = await searchParams;
+  const onlyMine = mine === "1";
 
   const projects = await prisma.project.findMany({
+    where: onlyMine ? { ownerId: user.id } : {},
     orderBy: [{ dueDate: "asc" }, { updatedAt: "desc" }],
     include: {
       customer: { select: { id: true, name: true } },
       tasks: { orderBy: { createdAt: "asc" } },
+      owner: { select: { name: true } },
     },
+  });
+
+  const teammates = await prisma.user.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
   });
 
   const board: KanbanProject[] = projects.map((p) => ({
@@ -29,6 +39,7 @@ export default async function ProjectsPage({
     completedAt: p.completedAt?.toISOString() ?? null,
     customerId: p.customer.id,
     customerName: p.customer.name,
+    ownerName: p.owner?.name ?? null,
     tasks: p.tasks.map((t) => ({ id: t.id, title: t.title, isDone: t.isDone })),
   }));
 
@@ -39,7 +50,30 @@ export default async function ProjectsPage({
         description="Drag projects between stages, click a card for details."
         action={<LinkButton href="/projects/new">+ New project</LinkButton>}
       />
-      <KanbanBoard projects={board} focusId={focus} />
+      <div className="mb-4 flex flex-wrap gap-2">
+        <Link
+          href="/projects"
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            !onlyMine
+              ? "bg-ink-900 text-white"
+              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          All projects
+        </Link>
+        <Link
+          href="/projects?mine=1"
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+            onlyMine
+              ? "bg-ink-900 text-white"
+              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50"
+          }`}
+        >
+          My projects
+        </Link>
+      </div>
+
+      <KanbanBoard projects={board} teammates={teammates} focusId={focus} />
     </div>
   );
 }

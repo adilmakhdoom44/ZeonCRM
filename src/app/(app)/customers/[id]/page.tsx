@@ -13,6 +13,7 @@ import {
 import { createAddressAction, deleteAddressAction } from "@/lib/actions/addresses";
 import { ActivityTimeline, TimelineActivity } from "@/components/activity-timeline";
 import { addTagToCustomerAction, removeTagFromCustomerAction } from "@/lib/actions/tags";
+import { setCustomerOwnerAction } from "@/lib/actions/ownership";
 import { tagChipClass } from "@/lib/tags";
 import { Badge, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
@@ -48,6 +49,7 @@ export default async function CustomerDetailPage({
       },
       addresses: true,
       tags: { orderBy: { name: "asc" } },
+      owner: { select: { id: true, name: true } },
       projects: { orderBy: { updatedAt: "desc" } },
       activities: {
         // Undone follow-ups float to the top — they are the part that needs doing.
@@ -61,6 +63,12 @@ export default async function CustomerDetailPage({
     },
   });
   if (!customer) notFound();
+
+  const teammates = await prisma.user.findMany({
+    where: { isActive: true },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
 
   const timeline: TimelineActivity[] = customer.activities.map((activity) => ({
     id: activity.id,
@@ -94,6 +102,25 @@ export default async function CustomerDetailPage({
         description={[customer.industry, customer.website].filter(Boolean).join(" · ") || undefined}
         action={
           <div className="flex items-center gap-3">
+            <form action={setCustomerOwnerAction} className="flex items-center gap-2">
+              <input type="hidden" name="id" value={id} />
+              <label className="text-xs uppercase tracking-wider text-slate-500">Owner</label>
+              <select
+                name="ownerId"
+                defaultValue={customer.owner?.id ?? ""}
+                className={`${inputCls} max-w-40`}
+              >
+                <option value="">Unassigned</option>
+                {teammates.map((mate) => (
+                  <option key={mate.id} value={mate.id}>
+                    {mate.name}
+                  </option>
+                ))}
+              </select>
+              <button className="text-sm font-medium text-brand-600 hover:text-brand-700">
+                Save
+              </button>
+            </form>
             <Badge value={customer.status} />
             <LinkButton href={`/customers/${id}/edit`} variant="secondary">
               Edit

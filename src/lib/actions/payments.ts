@@ -6,6 +6,8 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { invoiceTotals } from "@/lib/invoices";
+import { recordAudit } from "@/lib/audit";
+import { formatMoney } from "@/lib/money";
 
 const METHODS = ["BANK_TRANSFER", "CARD", "CASH", "CHEQUE", "OTHER"] as const;
 
@@ -54,7 +56,7 @@ async function syncInvoiceStatus(tx: Prisma.TransactionClient, invoiceId: string
 }
 
 export async function recordPaymentAction(invoiceId: string, formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
 
   const parsed = paymentSchema.safeParse({
     amount: Number(String(formData.get("amount") ?? "").replace(/[^0-9.]/g, "")),
@@ -69,7 +71,7 @@ export async function recordPaymentAction(invoiceId: string, formData: FormData)
 
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    select: { status: true },
+    select: { status: true, number: true },
   });
   if (!invoice) return { ok: false as const, error: "This invoice no longer exists." };
   if (invoice.status === "DRAFT") {
@@ -93,24 +95,41 @@ export async function recordPaymentAction(invoiceId: string, formData: FormData)
     await syncInvoiceStatus(tx, invoiceId);
   });
 
+  await recordAudit({
+    actor: user,
+    action: "paid",
+    entity: "Invoice",
+    entityId: invoiceId,
+    summary: `Recorded ${formatMoney(parsed.data.amount)} against ${invoice.number}`,
+  });
+
   refresh(invoiceId);
   return { ok: true as const };
 }
 
 /** Removing a receipt puts the invoice back where the remaining payments leave it. */
 export async function deletePaymentAction(formData: FormData) {
-  await requireUser();
+  const user = await requireUser();
   const id = String(formData.get("id"));
 
   const payment = await prisma.payment.findUnique({
     where: { id },
-    select: { invoiceId: true },
+    select: { invoiceId: true, amount: true, invoice: { select: { number: true } } },
   });
   if (!payment) return;
 
   await prisma.$transaction(async (tx) => {
     await tx.payment.delete({ where: { id } });
     await syncInvoiceStatus(tx, payment.invoiceId);
+  });
+
+  // Removing money from the record is exactly the kind of change an audit trail exists for.
+  await recordAudit({
+    actor: user,
+    action: "deleted",
+    entity: "Payment",
+    entityId: id,
+    summary: `Removed a ${formatMoney(Number(payment.amount))} payment from ${payment.invoice.number}`,
   });
 
   refresh(payment.invoiceId);

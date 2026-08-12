@@ -11,6 +11,7 @@ import {
   deleteProjectAction,
 } from "@/lib/actions/projects";
 import { createInvoiceFromProjectAction } from "@/lib/actions/invoices";
+import { setProjectOwnerAction } from "@/lib/actions/ownership";
 
 export type KanbanTask = {
   id: string;
@@ -28,6 +29,7 @@ export type KanbanProject = {
   completedAt: string | null;
   customerId: string;
   customerName: string;
+  ownerName: string | null;
   tasks: KanbanTask[];
 };
 
@@ -119,7 +121,10 @@ function Card({
       >
         {project.name}
       </p>
-      <p className="mt-0.5 text-xs text-slate-500">{project.customerName}</p>
+      <p className="mt-0.5 text-xs text-slate-500">
+        {project.customerName}
+        {project.ownerName && <span className="text-slate-400"> · {project.ownerName}</span>}
+      </p>
       <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
         {price && <span className="font-semibold text-slate-700">{price}</span>}
         {due && (
@@ -198,10 +203,12 @@ function Column({
 
 function ProjectOverlay({
   project,
+  teammates,
   onClose,
   onMove,
 }: {
   project: KanbanProject;
+  teammates: { id: string; name: string }[];
   onClose: () => void;
   onMove: (projectId: string, stage: string) => void;
 }) {
@@ -279,6 +286,41 @@ function ProjectOverlay({
                 Completed on {formatDate(project.completedAt)}
               </p>
             )}
+          </div>
+
+          {/* Owner */}
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+              Owner
+            </p>
+            <form
+              action={(fd) => startTransition(() => setProjectOwnerAction(fd))}
+              className="flex flex-wrap items-center gap-3"
+            >
+              <input type="hidden" name="id" value={project.id} />
+              <select
+                name="ownerId"
+                defaultValue=""
+                key={project.ownerName ?? "unassigned"}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:outline-2 focus:outline-brand-100"
+              >
+                <option value="">Unassigned</option>
+                {teammates.map((mate) => (
+                  <option key={mate.id} value={mate.id}>
+                    {mate.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                disabled={isPending}
+                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Assign
+              </button>
+              {project.ownerName && (
+                <span className="text-sm text-slate-500">Currently {project.ownerName}</span>
+              )}
+            </form>
           </div>
 
           {/* Price & deadline */}
@@ -451,9 +493,11 @@ function ProjectOverlay({
 
 export function KanbanBoard({
   projects,
+  teammates,
   focusId,
 }: {
   projects: KanbanProject[];
+  teammates: { id: string; name: string }[];
   focusId?: string;
 }) {
   // Opening straight onto a card lets other pages (a converted proposal, say)
@@ -492,6 +536,7 @@ export function KanbanBoard({
       {selected && (
         <ProjectOverlay
           project={selected}
+          teammates={teammates}
           onClose={() => setSelectedId(null)}
           onMove={moveProject}
         />
