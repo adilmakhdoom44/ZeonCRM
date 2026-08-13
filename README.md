@@ -25,6 +25,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Email that tells the truth** — send proposals, invoices and reset links from the app via Resend; every send is logged to the customer's timeline, and if no provider is configured the UI says the message was composed but not delivered rather than pretending otherwise
 - **Account owners** — assign a customer or project to a teammate, see it on the list and the board, and filter to just your own with "My accounts" and "My projects"
 - **Audit log** — who changed what, admin-only, filterable by record type and linking back to the thing that changed
+- **Company profile** — business name, contact details, currency and default tax rate edited in the app, flowing straight onto proposals, invoices and outgoing email
+- **Works on a phone** — every list scrolls inside its card rather than dragging the page sideways, and the nav scrolls instead of wrapping
 - **Authentication** — credentials login backed by bcrypt-hashed passwords (Auth.js v5, JWT sessions)
 - **User management** — admins add teammates, deactivate accounts and generate one-hour password-reset links
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
@@ -55,7 +57,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
 - [x] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
 - [x] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
-- [ ] **Day 10 — Settings, polish & release.** Company profile (name, logo, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, empty-state polish, then production deploy and end-to-end smoke test.
+- [ ] **Day 10 — Settings, polish & release.** Company profile (name, currency, tax rate) powering proposals/invoices ✅, mobile responsiveness pass ✅, test coverage for the money logic ✅ — **production deploy and smoke test still outstanding**, blocked on a hosted database (`DATABASE_URL` in Vercel is still the placeholder from `.env.example`).
 
 ## Stack
 
@@ -91,6 +93,7 @@ Useful scripts:
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
+| `npm test` | 27 tests over the money and invoice-status logic — Node's built-in runner, nothing to install |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed admin user + sample customers |
