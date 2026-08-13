@@ -6,6 +6,7 @@ import {
   generateResetLinkAction,
 } from "@/lib/actions/users";
 import { Badge, Button, Card, CardHeader, Input, PageHeader, Select } from "@/components/ui";
+import { SettingsNav } from "@/components/settings-nav";
 
 const errorMessages: Record<string, string> = {
   invalid: "Please fill all fields — passwords need at least 8 characters.",
@@ -25,6 +26,7 @@ export default async function UsersPage({
 
   return (
     <div>
+      <SettingsNav active="/settings/users" />
       <PageHeader
         title="Users"
         description="Manage who can sign in to Zeon CRM."

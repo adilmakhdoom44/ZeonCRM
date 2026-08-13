@@ -2,6 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireAdmin } from "@/lib/authz";
 import { Card, EmptyState, PageHeader } from "@/components/ui";
+import { SettingsNav } from "@/components/settings-nav";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -53,6 +54,7 @@ export default async function AuditPage({
 
   return (
     <div>
+      <SettingsNav active="/settings/audit" />
       <PageHeader
         title="Audit log"
         description="Who changed what. Written alongside the change and never edited."

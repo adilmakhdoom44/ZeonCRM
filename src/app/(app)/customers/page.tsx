@@ -182,7 +182,8 @@ export default async function CustomersPage({
             action={!filtered ? <LinkButton href="/customers/new">+ New customer</LinkButton> : undefined}
           />
         ) : (
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[46rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
                 <th className="px-5 py-3 font-medium">Name</th>
@@ -236,6 +237,7 @@ export default async function CustomersPage({
               ))}
             </tbody>
           </table>
+            </div>
         )}
       </Card>
     </div>

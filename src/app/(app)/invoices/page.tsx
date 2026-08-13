@@ -73,13 +73,14 @@ export default async function InvoicesPage() {
             action={<LinkButton href="/invoices/new">+ New invoice</LinkButton>}
           />
         ) : (
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[52rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
-                <th className="px-5 py-3 font-medium">Number</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Number</th>
                 <th className="px-5 py-3 font-medium">Title</th>
                 <th className="px-5 py-3 font-medium">Customer</th>
-                <th className="px-5 py-3 font-medium">Due</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Due</th>
                 <th className="px-5 py-3 font-medium">Status</th>
                 <th className="px-5 py-3 text-right font-medium">Total</th>
                 <th className="px-5 py-3 text-right font-medium">Balance</th>
@@ -122,6 +123,7 @@ export default async function InvoicesPage() {
               ))}
             </tbody>
           </table>
+            </div>
         )}
       </Card>
     </div>

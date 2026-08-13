@@ -27,7 +27,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex shrink-0 items-center gap-1">
+          {/* Scrolls sideways on a phone rather than forcing the whole page wide.
+              shrink-0 only from lg, where there is room for every link at once. */}
+          {/* The nav is the only thing that gives: when the bar is crowded it
+              scrolls sideways, so the search box and the user menu keep their
+              size and nothing ever overlaps. */}
+          <nav className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {nav.map((item) => (
               <Link
                 key={item.href}
@@ -37,37 +42,26 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 {item.label}
               </Link>
             ))}
+            {/* One entry for the admin area; it splits into tabs once you are there. */}
             {user.role === "ADMIN" && (
-              <>
-                <Link
-                  href="/settings/users"
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-ink-700 hover:text-white"
-                >
-                  Users
-                </Link>
-                <Link
-                  href="/settings/audit"
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-ink-700 hover:text-white"
-                >
-                  Audit
-                </Link>
-                <Link
-                  href="/settings/company"
-                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-ink-700 hover:text-white"
-                >
-                  Settings
-                </Link>
-              </>
+              <Link
+                href="/settings/company"
+                className="whitespace-nowrap rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-ink-700 hover:text-white"
+              >
+                Settings
+              </Link>
             )}
           </nav>
 
-          <form action="/search" className="ml-auto hidden min-w-0 lg:block">
+          {/* Shares the leftover space with the nav: the input tracks the form's
+              width so a crowded bar narrows the box instead of overlapping the name. */}
+          <form action="/search" className="hidden shrink-0 lg:block">
             <input
               type="search"
               name="q"
-              placeholder="Search everything…"
+              placeholder="Search…"
               aria-label="Search"
-              className="w-44 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-sm text-white transition-[width] placeholder:text-slate-500 focus:w-56 focus:border-brand-500 focus:outline-none"
+              className="w-40 rounded-lg border border-ink-700 bg-ink-800 px-3 py-1.5 text-sm text-white placeholder:text-slate-500 focus:border-brand-500 focus:outline-none"
             />
           </form>
 

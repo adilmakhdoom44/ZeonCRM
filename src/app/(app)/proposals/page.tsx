@@ -60,10 +60,11 @@ export default async function ProposalsPage() {
             action={<LinkButton href="/proposals/new">+ New proposal</LinkButton>}
           />
         ) : (
-          <table className="w-full text-left text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[48rem] text-left text-sm">
             <thead>
               <tr className="border-b border-slate-100 text-xs uppercase tracking-wider text-slate-500">
-                <th className="px-5 py-3 font-medium">Number</th>
+                <th className="whitespace-nowrap px-5 py-3 font-medium">Number</th>
                 <th className="px-5 py-3 font-medium">Title</th>
                 <th className="px-5 py-3 font-medium">Customer</th>
                 <th className="px-5 py-3 font-medium">Valid until</th>
@@ -101,6 +102,7 @@ export default async function ProposalsPage() {
               ))}
             </tbody>
           </table>
+            </div>
         )}
       </Card>
     </div>
