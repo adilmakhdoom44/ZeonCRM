@@ -1,4 +1,4 @@
-import { company } from "@/lib/company";
+import type { Company } from "@/lib/company";
 import { formatMoney, lineTotal } from "@/lib/money";
 import { invoiceTotals, type InvoiceStatus } from "@/lib/invoices";
 
@@ -29,7 +29,15 @@ const dateFmt = new Intl.DateTimeFormat("en-US", {
 
 const qtyFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 2 });
 
-function StatusNotice({ status, balance }: { status: InvoiceStatus; balance: number }) {
+function StatusNotice({
+  status,
+  balance,
+  currency,
+}: {
+  status: InvoiceStatus;
+  balance: number;
+  currency: string;
+}) {
   if (status === "PAID") {
     return (
       <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
@@ -41,7 +49,7 @@ function StatusNotice({ status, balance }: { status: InvoiceStatus; balance: num
   if (status === "OVERDUE") {
     return (
       <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        <strong className="font-semibold">Overdue</strong> — {formatMoney(balance)} remains
+        <strong className="font-semibold">Overdue</strong> — {formatMoney(balance, currency)} remains
         outstanding past the due date.
       </div>
     );
@@ -50,7 +58,7 @@ function StatusNotice({ status, balance }: { status: InvoiceStatus; balance: num
   if (status === "PARTIALLY_PAID") {
     return (
       <div className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-        <strong className="font-semibold">Part paid</strong> — {formatMoney(balance)} remains
+        <strong className="font-semibold">Part paid</strong> — {formatMoney(balance, currency)} remains
         outstanding.
       </div>
     );
@@ -77,7 +85,13 @@ function StatusNotice({ status, balance }: { status: InvoiceStatus; balance: num
 }
 
 /** The customer-facing invoice, used by the print view. */
-export function InvoiceDocument({ invoice }: { invoice: DocumentInvoice }) {
+export function InvoiceDocument({
+  invoice,
+  company,
+}: {
+  invoice: DocumentInvoice;
+  company: Company;
+}) {
   const money = invoiceTotals(invoice.items, invoice.taxRate, invoice.payments);
 
   return (
@@ -121,7 +135,7 @@ export function InvoiceDocument({ invoice }: { invoice: DocumentInvoice }) {
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
             Amount due
           </p>
-          <p className="mt-2 text-2xl font-semibold tabular-nums">{formatMoney(money.balance)}</p>
+          <p className="mt-2 text-2xl font-semibold tabular-nums">{formatMoney(money.balance, company.currency)}</p>
         </div>
       </div>
 
@@ -145,10 +159,10 @@ export function InvoiceDocument({ invoice }: { invoice: DocumentInvoice }) {
                 {qtyFmt.format(item.quantity)}
               </td>
               <td className="py-3 text-right tabular-nums text-slate-600">
-                {formatMoney(item.unitPrice)}
+                {formatMoney(item.unitPrice, company.currency)}
               </td>
               <td className="py-3 text-right font-medium tabular-nums">
-                {formatMoney(lineTotal(item))}
+                {formatMoney(lineTotal(item), company.currency)}
               </td>
             </tr>
           ))}
@@ -159,25 +173,25 @@ export function InvoiceDocument({ invoice }: { invoice: DocumentInvoice }) {
         <dl className="w-full max-w-xs space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-slate-500">Subtotal</dt>
-            <dd className="tabular-nums">{formatMoney(money.subtotal)}</dd>
+            <dd className="tabular-nums">{formatMoney(money.subtotal, company.currency)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-slate-500">Tax ({qtyFmt.format(invoice.taxRate)}%)</dt>
-            <dd className="tabular-nums">{formatMoney(money.tax)}</dd>
+            <dd className="tabular-nums">{formatMoney(money.tax, company.currency)}</dd>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2">
             <dt className="text-slate-500">Total</dt>
-            <dd className="tabular-nums">{formatMoney(money.total)}</dd>
+            <dd className="tabular-nums">{formatMoney(money.total, company.currency)}</dd>
           </div>
           {money.paid > 0 && (
             <div className="flex justify-between">
               <dt className="text-slate-500">Paid</dt>
-              <dd className="tabular-nums">−{formatMoney(money.paid)}</dd>
+              <dd className="tabular-nums">−{formatMoney(money.paid, company.currency)}</dd>
             </div>
           )}
           <div className="flex justify-between border-t border-slate-200 pt-2 text-base">
             <dt className="font-semibold">Amount due</dt>
-            <dd className="font-semibold tabular-nums">{formatMoney(money.balance)}</dd>
+            <dd className="font-semibold tabular-nums">{formatMoney(money.balance, company.currency)}</dd>
           </div>
         </dl>
       </div>
@@ -192,7 +206,7 @@ export function InvoiceDocument({ invoice }: { invoice: DocumentInvoice }) {
       )}
 
       <div className="mt-8">
-        <StatusNotice status={invoice.status} balance={money.balance} />
+        <StatusNotice status={invoice.status} balance={money.balance} currency={company.currency} />
       </div>
 
       <footer className="mt-10 border-t border-slate-200 pt-6 text-xs text-slate-400">

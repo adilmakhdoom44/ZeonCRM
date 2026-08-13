@@ -51,6 +51,12 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
                 >
                   Audit
                 </Link>
+                <Link
+                  href="/settings/company"
+                  className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-ink-700 hover:text-white"
+                >
+                  Settings
+                </Link>
               </>
             )}
           </nav>

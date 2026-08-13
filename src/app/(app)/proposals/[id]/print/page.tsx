@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/authz";
+import { getCompany } from "@/lib/company";
 import { loadProposalDocument } from "@/lib/proposal-loader";
 import { ProposalDocument } from "@/components/proposal-document";
 import { PrintButton } from "@/components/print-button";
@@ -14,7 +15,10 @@ export default async function ProposalPrintPage({
   await requireUser();
   const { id } = await params;
 
-  const proposal = await loadProposalDocument({ id });
+  const [proposal, company] = await Promise.all([
+    loadProposalDocument({ id }),
+    getCompany(),
+  ]);
   if (!proposal) notFound();
 
   return (
@@ -30,7 +34,7 @@ export default async function ProposalPrintPage({
       </div>
 
       <Card className="overflow-hidden print:border-0 print:shadow-none">
-        <ProposalDocument proposal={proposal} />
+        <ProposalDocument proposal={proposal} company={company} />
       </Card>
     </div>
   );

@@ -94,7 +94,7 @@ export async function emailProposalAction(formData: FormData) {
     Number(proposal.taxRate),
   );
 
-  const { subject, html } = proposalEmail({
+  const { subject, html } = await proposalEmail({
     contactName: recipient.name,
     number: proposal.number,
     title: proposal.title,
@@ -155,7 +155,7 @@ export async function emailInvoiceAction(formData: FormData) {
     invoice.payments.map((p) => ({ amount: Number(p.amount) })),
   );
 
-  const { subject, html } = invoiceEmail({
+  const { subject, html } = await invoiceEmail({
     contactName: recipient.name,
     number: invoice.number,
     title: invoice.title,

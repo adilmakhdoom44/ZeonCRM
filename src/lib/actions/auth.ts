@@ -52,7 +52,7 @@ export async function requestPasswordResetAction(formData: FormData) {
     const base = process.env.AUTH_URL ?? "http://localhost:3000";
     const resetUrl = `${base}/reset-password/${token}`;
 
-    const { subject, html } = passwordResetEmail({ name: user.name, resetUrl });
+    const { subject, html } = await passwordResetEmail({ name: user.name, resetUrl });
     const result = await sendEmail({ to: email, subject, html });
 
     // Without an API key sendEmail logs instead of delivering, so print the link

@@ -1,4 +1,4 @@
-import { company } from "@/lib/company";
+import type { Company } from "@/lib/company";
 import { formatMoney, lineTotal, totals } from "@/lib/money";
 import type { ProposalStatus } from "@/lib/proposals";
 
@@ -66,7 +66,13 @@ function ResponseNotice({ proposal }: { proposal: DocumentProposal }) {
 }
 
 /** The customer-facing quote: used by the internal print view and the public share link. */
-export function ProposalDocument({ proposal }: { proposal: DocumentProposal }) {
+export function ProposalDocument({
+  proposal,
+  company,
+}: {
+  proposal: DocumentProposal;
+  company: Company;
+}) {
   const summaryTotals = totals(proposal.items, proposal.taxRate);
 
   return (
@@ -130,10 +136,10 @@ export function ProposalDocument({ proposal }: { proposal: DocumentProposal }) {
                 {qtyFmt.format(item.quantity)}
               </td>
               <td className="py-3 text-right tabular-nums text-slate-600">
-                {formatMoney(item.unitPrice)}
+                {formatMoney(item.unitPrice, company.currency)}
               </td>
               <td className="py-3 text-right font-medium tabular-nums">
-                {formatMoney(lineTotal(item))}
+                {formatMoney(lineTotal(item), company.currency)}
               </td>
             </tr>
           ))}
@@ -144,15 +150,15 @@ export function ProposalDocument({ proposal }: { proposal: DocumentProposal }) {
         <dl className="w-full max-w-xs space-y-2 text-sm">
           <div className="flex justify-between">
             <dt className="text-slate-500">Subtotal</dt>
-            <dd className="tabular-nums">{formatMoney(summaryTotals.subtotal)}</dd>
+            <dd className="tabular-nums">{formatMoney(summaryTotals.subtotal, company.currency)}</dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-slate-500">Tax ({qtyFmt.format(proposal.taxRate)}%)</dt>
-            <dd className="tabular-nums">{formatMoney(summaryTotals.tax)}</dd>
+            <dd className="tabular-nums">{formatMoney(summaryTotals.tax, company.currency)}</dd>
           </div>
           <div className="flex justify-between border-t border-slate-200 pt-2 text-base">
             <dt className="font-semibold">Total</dt>
-            <dd className="font-semibold tabular-nums">{formatMoney(summaryTotals.total)}</dd>
+            <dd className="font-semibold tabular-nums">{formatMoney(summaryTotals.total, company.currency)}</dd>
           </div>
         </dl>
       </div>

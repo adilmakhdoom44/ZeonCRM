@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
-import { company } from "@/lib/company";
+import { getCompany } from "@/lib/company";
 import { isAwaitingResponse } from "@/lib/proposals";
 import { loadProposalDocument } from "@/lib/proposal-loader";
 import { ProposalDocument } from "@/components/proposal-document";
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-function LinkNotValid() {
+function LinkNotValid({ companyName }: { companyName: string }) {
   return (
     <main className="flex min-h-screen items-center justify-center px-4 py-16">
       <div className="max-w-md text-center">
@@ -21,7 +21,7 @@ function LinkNotValid() {
         </p>
         <p className="mt-2 text-sm text-slate-500">
           The proposal may have been withdrawn or replaced with an updated version. Please contact{" "}
-          {company.name} for a current copy.
+          {companyName} for a current copy.
         </p>
       </div>
     </main>
@@ -35,15 +35,16 @@ export default async function SharedProposalPage({
 }) {
   const { token } = await params;
 
-  const [proposal, record] = await Promise.all([
+  const [proposal, record, company] = await Promise.all([
     loadProposalDocument({ shareToken: token }),
     prisma.proposal.findUnique({
       where: { shareToken: token },
       select: { status: true, validUntil: true },
     }),
+    getCompany(),
   ]);
 
-  if (!proposal || !record) return <LinkNotValid />;
+  if (!proposal || !record) return <LinkNotValid companyName={company.name} />;
 
   return (
     <main className="min-h-screen px-4 py-10 sm:py-16">
@@ -56,7 +57,7 @@ export default async function SharedProposalPage({
         </div>
 
         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-[0_1px_2px_rgba(16,24,40,0.04)] print:border-0 print:shadow-none">
-          <ProposalDocument proposal={proposal} />
+          <ProposalDocument proposal={proposal} company={company} />
         </div>
 
         {isAwaitingResponse(record) && (

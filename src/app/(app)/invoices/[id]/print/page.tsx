@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { getCompany } from "@/lib/company";
 import { requireUser } from "@/lib/authz";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoices";
 import { InvoiceDocument, DocumentInvoice } from "@/components/invoice-document";
@@ -26,6 +27,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
   });
   if (!invoice) notFound();
 
+  const company = await getCompany();
   const contact = invoice.customer.contacts[0];
   const address =
     invoice.customer.addresses.find((a) => a.type === "BILLING") ??
@@ -79,7 +81,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
       </div>
 
       <Card className="overflow-hidden print:border-0 print:shadow-none">
-        <InvoiceDocument invoice={document} />
+        <InvoiceDocument invoice={document} company={company} />
       </Card>
     </div>
   );

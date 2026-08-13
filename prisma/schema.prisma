@@ -113,6 +113,22 @@ model AuditLog {
   @@index([createdAt])
 }
 
+/**
+ * Your own business details, printed on every proposal and invoice. A single row
+ * — the app serves one company — pinned to a fixed id so it can be upserted
+ * without first asking whether it exists.
+ */
+model CompanySettings {
+  id        String   @id @default("default")
+  name      String   @default("Zeon Studio")
+  email     String?
+  phone     String?
+  address   String?
+  currency  String   @default("USD")
+  taxRate   Decimal  @default(0) @db.Decimal(5, 2)
+  updatedAt DateTime @updatedAt
+}
+
 /** A label you can hang on any number of accounts and then filter by. */
 model Tag {
   id        String   @id @default(cuid())

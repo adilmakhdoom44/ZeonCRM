@@ -1,13 +1,31 @@
 export const CURRENCY = "USD";
 
-const formatter = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: CURRENCY,
-  minimumFractionDigits: 2,
-});
+// Formatters are not free to build, and the same handful of currencies get asked
+// for over and over on a list of invoices.
+const formatters = new Map<string, Intl.NumberFormat>();
 
-export function formatMoney(value: number) {
-  return formatter.format(Number.isFinite(value) ? value : 0);
+function formatterFor(currency: string) {
+  const existing = formatters.get(currency);
+  if (existing) return existing;
+
+  let created: Intl.NumberFormat;
+  try {
+    created = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      minimumFractionDigits: 2,
+    });
+  } catch {
+    // An unknown code from settings must not take a page down with it.
+    created = formatterFor(CURRENCY);
+  }
+
+  formatters.set(currency, created);
+  return created;
+}
+
+export function formatMoney(value: number, currency: string = CURRENCY) {
+  return formatterFor(currency).format(Number.isFinite(value) ? value : 0);
 }
 
 export function round2(value: number) {
