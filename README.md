@@ -32,17 +32,35 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Password reset** — self-service token flow (`/forgot-password` → `/reset-password/[token]`)
 - **Role-based access** — admin-only areas enforced server-side, not just hidden in the UI; deactivated or deleted users are signed out on their very next request
 
+The dashboard leads with the questions a small studio actually asks: what came in this month, what is owed, what is late, and what is still in the pipeline.
+
+![Dashboard](docs/dashboard.png)
+
+Everything billed, with each invoice's status worked out from its payments and due date rather than trusted from a column:
+
+![Invoices](docs/invoices.png)
+
+An invoice part way through being paid — receipts listed, and the next payment pre-filled with what is left:
+
+![Invoice with payments](docs/invoice-payments.png)
+
+One account, everything about it: the timeline, tags, owner, contacts, addresses and projects.
+
+![Customer detail](docs/customer-detail.png)
+
 ![Projects Kanban](docs/projects-kanban.png)
 
-![Proposal builder](docs/proposal-builder.png)
+Quotes are built from line items, sent as a private link, and accepted online without an account:
 
-The same quote as the customer sees it — a public link, no login required:
-
-![Shared proposal](docs/shared-proposal.png)
-
-| Login | Customer detail |
+| Proposal builder | The same quote, as the customer sees it |
 | --- | --- |
-| ![Login](docs/login.png) | ![Customer detail](docs/customer-detail.png) |
+| ![Proposal builder](docs/proposal-builder.png) | ![Shared proposal](docs/shared-proposal.png) |
+
+| Search across everything | Audit log |
+| --- | --- |
+| ![Search](docs/search.png) | ![Audit log](docs/audit-log.png) |
+
+![Login](docs/login.png)
 
 ## Roadmap — 10-day build plan
 
