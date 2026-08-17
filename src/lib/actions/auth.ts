@@ -7,18 +7,49 @@ import bcrypt from "bcryptjs";
 import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { passwordResetEmail, sendEmail } from "@/lib/email";
+import { callerIp, checkRateLimit, clearRateLimit, recordAttempt } from "@/lib/rate-limit";
+
+/**
+ * Two buckets, because they stop different things. The per-address one keeps a
+ * single account from being ground through a password list; the per-caller one
+ * keeps somebody from spraying one password across many accounts. Both have to
+ * allow the attempt for it to proceed.
+ */
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
 
 export async function loginAction(formData: FormData) {
+  const email = String(formData.get("email") ?? "").trim();
+  const ip = await callerIp();
+
+  const [byAccount, byCaller] = await Promise.all([
+    checkRateLimit({ scope: "login:email", identifier: email, limit: 5, windowMs: LOGIN_WINDOW_MS }),
+    checkRateLimit({ scope: "login:ip", identifier: ip, limit: 20, windowMs: LOGIN_WINDOW_MS }),
+  ]);
+
+  if (!byAccount.allowed || !byCaller.allowed) {
+    redirect(
+      `/login?throttled=${Math.max(byAccount.retryAfterSeconds, byCaller.retryAfterSeconds)}`,
+    );
+  }
+
   try {
     await signIn("credentials", {
-      email: formData.get("email"),
+      email,
       password: formData.get("password"),
       redirectTo: "/dashboard",
     });
   } catch (error) {
+    // A correct sign-in leaves through here too — signIn throws its redirect — so
+    // only an AuthError counts against the budget.
     if (error instanceof AuthError) {
+      await Promise.all([
+        recordAttempt("login:email", email),
+        recordAttempt("login:ip", ip),
+      ]);
       redirect("/login?error=1");
     }
+    // A successful sign-in wipes the slate for that address.
+    await clearRateLimit("login:email", email);
     throw error;
   }
 }
@@ -45,6 +76,20 @@ export async function createResetToken(userId: string) {
 
 export async function requestPasswordResetAction(formData: FormData) {
   const email = String(formData.get("email") ?? "").trim();
+
+  // Throttled per caller rather than per address: the response is deliberately
+  // identical whether or not the account exists, and per-address limiting would
+  // leak which is which by behaving differently.
+  const ip = await callerIp();
+  const allowance = await checkRateLimit({
+    scope: "reset:ip",
+    identifier: ip,
+    limit: 5,
+    windowMs: 60 * 60 * 1000,
+  });
+  if (!allowance.allowed) redirect("/forgot-password?sent=1");
+  await recordAttempt("reset:ip", ip);
+
   const user = await prisma.user.findUnique({ where: { email } });
 
   if (user && user.isActive) {

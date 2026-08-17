@@ -129,6 +129,20 @@ model CompanySettings {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * One row per attempt at something worth throttling. Kept in the database
+ * rather than in memory on purpose: on Vercel each request may hit a different
+ * instance, and a limiter that forgets between instances is not a limiter.
+ * Rows are pruned as they expire, so the table stays small.
+ */
+model RateLimitHit {
+  id        String   @id @default(cuid())
+  bucket    String
+  createdAt DateTime @default(now())
+
+  @@index([bucket, createdAt])
+}
+
 /** A label you can hang on any number of accounts and then filter by. */
 model Tag {
   id        String   @id @default(cuid())

@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { loginAction } from "@/lib/actions/auth";
+import { retryMessage } from "@/lib/rate-limit";
 import { Button, Input } from "@/components/ui";
 
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string; reset?: string }>;
+  searchParams: Promise<{ error?: string; reset?: string; throttled?: string }>;
 }) {
   const params = await searchParams;
+  const throttledFor = Number(params.throttled);
 
   return (
     <div>
@@ -28,6 +30,11 @@ export default async function LoginPage({
       {params.error && (
         <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           Invalid email or password.
+        </p>
+      )}
+      {Number.isFinite(throttledFor) && throttledFor > 0 && (
+        <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          {retryMessage(throttledFor)}
         </p>
       )}
       {params.reset && (

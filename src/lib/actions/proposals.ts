@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { isAwaitingResponse, isEditable } from "@/lib/proposals";
 import { totals } from "@/lib/money";
+import { callerIp, checkRateLimit, recordAttempt, retryMessage } from "@/lib/rate-limit";
 
 const itemSchema = z.object({
   description: z.string().trim().max(500),
@@ -174,6 +175,20 @@ export async function respondToProposalAction(
   token: string,
   payload: { decision: string; name: string; note?: string },
 ) {
+  // This endpoint is reachable by anyone holding a link, so it gets its own
+  // ceiling — enough for a client who mistypes their name, not enough to hammer.
+  const ip = await callerIp();
+  const allowance = await checkRateLimit({
+    scope: "proposal-response:ip",
+    identifier: ip,
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (!allowance.allowed) {
+    return { ok: false as const, error: retryMessage(allowance.retryAfterSeconds) };
+  }
+  await recordAttempt("proposal-response:ip", ip);
+
   const parsed = responseSchema.safeParse(payload);
   if (!parsed.success) {
     return { ok: false as const, error: "Please enter your full name to confirm." };
