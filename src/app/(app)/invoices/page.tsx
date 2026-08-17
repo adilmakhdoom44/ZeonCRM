@@ -73,7 +73,14 @@ export default async function InvoicesPage({
       <PageHeader
         title="Invoices"
         description="What you have billed, and what is still owed."
-        action={<LinkButton href="/invoices/new">+ New invoice</LinkButton>}
+        action={
+          <div className="flex items-center gap-3">
+            <LinkButton href="/invoices/recurring" variant="secondary">
+              Repeating
+            </LinkButton>
+            <LinkButton href="/invoices/new">+ New invoice</LinkButton>
+          </div>
+        }
       />
 
       {total > 0 && (

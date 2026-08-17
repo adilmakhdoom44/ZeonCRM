@@ -57,6 +57,13 @@ enum PaymentMethod {
   OTHER
 }
 
+enum Cadence {
+  WEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
 enum ActivityType {
   NOTE
   CALL
@@ -206,6 +213,7 @@ model Customer {
   invoices   Invoice[]
   activities Activity[]
   tags       Tag[]
+  recurring  RecurringInvoice[]
 
   @@index([name])
 }
@@ -374,10 +382,55 @@ model Activity {
   @@index([followUpAt])
 }
 
-model Invoice {
-  id         String        @id @default(cuid())
-  number     String        @unique
+/**
+ * A standing arrangement that produces invoices — a retainer, a hosting fee.
+ * It holds its own copy of the line items rather than pointing at the invoice it
+ * was created from: editing or deleting last month's invoice must not silently
+ * change what gets billed next month.
+ */
+model RecurringInvoice {
+  id         String    @id @default(cuid())
   customerId String
+  title      String
+  taxRate    Decimal   @default(0) @db.Decimal(5, 2)
+  notes      String?   @db.Text
+  terms      String?   @db.Text
+  cadence    Cadence   @default(MONTHLY)
+  // How long the generated invoice gets to be paid, counted from its issue date.
+  dueInDays  Int       @default(30)
+  nextRunOn  DateTime
+  lastRunOn  DateTime?
+  isActive   Boolean   @default(true)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  customer  Customer               @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items     RecurringInvoiceItem[]
+  generated Invoice[]
+
+  @@index([customerId])
+  @@index([isActive, nextRunOn])
+}
+
+model RecurringInvoiceItem {
+  id                 String  @id @default(cuid())
+  recurringInvoiceId String
+  description        String
+  quantity           Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice          Decimal @default(0) @db.Decimal(12, 2)
+  position           Int     @default(0)
+
+  recurringInvoice RecurringInvoice @relation(fields: [recurringInvoiceId], references: [id], onDelete: Cascade)
+
+  @@index([recurringInvoiceId])
+}
+
+model Invoice {
+  id                 String @id @default(cuid())
+  number             String @unique
+  customerId         String
+  // Set when this invoice was produced by a standing arrangement.
+  recurringInvoiceId String?
   // Where the invoice came from. Both are optional and nullable on delete: billing
   // history outlives the project or quote it was raised against.
   projectId  String?
@@ -394,11 +447,12 @@ model Invoice {
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
 
-  customer Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  project  Project?      @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  proposal Proposal?     @relation(fields: [proposalId], references: [id], onDelete: SetNull)
-  items    InvoiceItem[]
-  payments Payment[]
+  customer         Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  project          Project?          @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  proposal         Proposal?         @relation(fields: [proposalId], references: [id], onDelete: SetNull)
+  recurringInvoice RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id], onDelete: SetNull)
+  items            InvoiceItem[]
+  payments         Payment[]
 
   @@index([customerId])
   @@index([projectId])

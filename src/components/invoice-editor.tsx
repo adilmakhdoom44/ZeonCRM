@@ -7,6 +7,7 @@ import { deleteInvoiceAction, saveInvoiceAction } from "@/lib/actions/invoices";
 import { Badge, Card, CardHeader } from "@/components/ui";
 import { InvoiceLifecycle } from "@/components/invoice-lifecycle";
 import { InvoicePayments, EditorPayment } from "@/components/invoice-payments";
+import { RepeatInvoiceForm } from "@/components/recurring-controls";
 
 export type EditorItem = {
   description: string;
@@ -303,6 +304,11 @@ export function InvoiceEditor({
               />
             </div>
           </Card>
+
+          <RepeatInvoiceForm
+            invoiceId={invoice.id}
+            defaultStart={new Date().toISOString().slice(0, 10)}
+          />
 
           <InvoicePayments
             invoiceId={invoice.id}
