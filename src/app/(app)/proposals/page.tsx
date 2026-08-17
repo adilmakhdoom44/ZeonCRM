@@ -3,20 +3,43 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney, totals } from "@/lib/money";
 import { effectiveStatus } from "@/lib/proposals";
+import { PAGE_SIZE, Pagination, pageFrom } from "@/components/pagination";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export default async function ProposalsPage() {
+export default async function ProposalsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireUser();
+  const { page: pageParam } = await searchParams;
 
-  const proposals = await prisma.proposal.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      customer: { select: { id: true, name: true } },
-      items: { select: { quantity: true, unitPrice: true } },
-    },
-  });
+  const total = await prisma.proposal.count();
+  const page = pageFrom(pageParam, total);
+
+  const [proposals, liveProposals] = await Promise.all([
+    prisma.proposal.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        customer: { select: { id: true, name: true } },
+        items: { select: { quantity: true, unitPrice: true } },
+      },
+    }),
+    // Open value covers every unanswered quote, not just the page in view.
+    prisma.proposal.findMany({
+      where: { status: { in: ["DRAFT", "SENT"] } },
+      select: {
+        status: true,
+        validUntil: true,
+        taxRate: true,
+        items: { select: { quantity: true, unitPrice: true } },
+      },
+    }),
+  ]);
 
   const rows = proposals.map((p) => ({
     ...p,
@@ -27,9 +50,16 @@ export default async function ProposalsPage() {
     ).total,
   }));
 
-  const openValue = rows
-    .filter((r) => r.status === "DRAFT" || r.status === "SENT")
-    .reduce((sum, r) => sum + r.total, 0);
+  const openValue = liveProposals
+    .map((p) => ({
+      status: effectiveStatus(p),
+      total: totals(
+        p.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
+        Number(p.taxRate),
+      ).total,
+    }))
+    .filter((p) => p.status === "DRAFT" || p.status === "SENT")
+    .reduce((sum, p) => sum + p.total, 0);
 
   return (
     <div>
@@ -39,7 +69,7 @@ export default async function ProposalsPage() {
         action={<LinkButton href="/proposals/new">+ New proposal</LinkButton>}
       />
 
-      {rows.length > 0 && (
+      {total > 0 && (
         <div className="mb-4 flex flex-wrap gap-3">
           <Card className="px-5 py-3">
             <p className="text-xs uppercase tracking-wider text-slate-500">Open value</p>
@@ -47,7 +77,7 @@ export default async function ProposalsPage() {
           </Card>
           <Card className="px-5 py-3">
             <p className="text-xs uppercase tracking-wider text-slate-500">Proposals</p>
-            <p className="mt-0.5 text-lg font-semibold text-slate-900">{rows.length}</p>
+            <p className="mt-0.5 text-lg font-semibold text-slate-900">{total}</p>
           </Card>
         </div>
       )}
@@ -105,6 +135,14 @@ export default async function ProposalsPage() {
             </div>
         )}
       </Card>
+
+      <Pagination
+        basePath="/proposals"
+        params={new URLSearchParams()}
+        page={page}
+        total={total}
+        noun="proposal"
+      />
     </div>
   );
 }

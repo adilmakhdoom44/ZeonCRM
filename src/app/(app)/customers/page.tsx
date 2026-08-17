@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { deleteViewAction, saveViewAction } from "@/lib/actions/views";
 import { tagChipClass } from "@/lib/tags";
+import { PAGE_SIZE, Pagination, pageFrom } from "@/components/pagination";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const STATUSES = ["LEAD", "ACTIVE", "INACTIVE"] as const;
@@ -23,27 +24,40 @@ function toQuery(filters: { q?: string; status?: string; tag?: string; mine?: bo
 export default async function CustomersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; status?: string; tag?: string; mine?: string }>;
+  searchParams: Promise<{
+    q?: string;
+    status?: string;
+    tag?: string;
+    mine?: string;
+    page?: string;
+  }>;
 }) {
   const user = await requireUser();
-  const { q, status, tag, mine } = await searchParams;
+  const { q, status, tag, mine, page: pageParam } = await searchParams;
   const onlyMine = mine === "1";
 
   const activeStatus = status && STATUSES.includes(status as (typeof STATUSES)[number])
     ? (status as (typeof STATUSES)[number])
     : undefined;
 
+  const where = {
+    ...(q ? { OR: [{ name: { contains: q } }, { industry: { contains: q } }] } : {}),
+    ...(activeStatus ? { status: activeStatus } : {}),
+    ...(tag ? { tags: { some: { name: tag } } } : {}),
+    ...(onlyMine ? { ownerId: user.id } : {}),
+  };
+
+  // Count first: the page number has to be clamped against a real total before
+  // it can be used as an offset.
+  const total = await prisma.customer.count({ where });
+  const page = pageFrom(pageParam, total);
+
   const [customers, tags, views] = await Promise.all([
     prisma.customer.findMany({
-      where: {
-        ...(q
-          ? { OR: [{ name: { contains: q } }, { industry: { contains: q } }] }
-          : {}),
-        ...(activeStatus ? { status: activeStatus } : {}),
-        ...(tag ? { tags: { some: { name: tag } } } : {}),
-        ...(onlyMine ? { ownerId: user.id } : {}),
-      },
+      where,
       orderBy: { updatedAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
       include: {
         _count: { select: { contacts: true, projects: true } },
         contacts: { where: { isPrimary: true }, take: 1 },
@@ -240,6 +254,14 @@ export default async function CustomersPage({
             </div>
         )}
       </Card>
+
+      <Pagination
+        basePath="/customers"
+        params={new URLSearchParams(currentQuery)}
+        page={page}
+        total={total}
+        noun="customer"
+      />
     </div>
   );
 }

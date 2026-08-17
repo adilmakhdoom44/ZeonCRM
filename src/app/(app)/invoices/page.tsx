@@ -3,34 +3,68 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney } from "@/lib/money";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoices";
+import { PAGE_SIZE, Pagination, pageFrom } from "@/components/pagination";
 import { Badge, Card, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" });
 
-export default async function InvoicesPage() {
+const withMoney = <T extends {
+  taxRate: unknown;
+  items: { quantity: unknown; unitPrice: unknown }[];
+  payments: { amount: unknown }[];
+  status: string;
+  dueDate: Date | null;
+}>(invoice: T) => {
+  const money = invoiceTotals(
+    invoice.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
+    Number(invoice.taxRate),
+    invoice.payments.map((p) => ({ amount: Number(p.amount) })),
+  );
+  return { ...invoice, ...money, status: effectiveInvoiceStatus(invoice, money.balance) };
+};
+
+export default async function InvoicesPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ page?: string }>;
+}) {
   await requireUser();
+  const { page: pageParam } = await searchParams;
 
-  const invoices = await prisma.invoice.findMany({
-    orderBy: { createdAt: "desc" },
-    include: {
-      customer: { select: { id: true, name: true } },
-      items: { select: { quantity: true, unitPrice: true } },
-      payments: { select: { amount: true } },
-    },
-  });
+  const total = await prisma.invoice.count();
+  const page = pageFrom(pageParam, total);
 
-  const rows = invoices.map((invoice) => {
-    const money = invoiceTotals(
-      invoice.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
-      Number(invoice.taxRate),
-      invoice.payments.map((p) => ({ amount: Number(p.amount) })),
-    );
-    return { ...invoice, ...money, status: effectiveInvoiceStatus(invoice, money.balance) };
-  });
+  const [invoices, liveInvoices] = await Promise.all([
+    prisma.invoice.findMany({
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * PAGE_SIZE,
+      take: PAGE_SIZE,
+      include: {
+        customer: { select: { id: true, name: true } },
+        items: { select: { quantity: true, unitPrice: true } },
+        payments: { select: { amount: true } },
+      },
+    }),
+    // The totals above the table describe the whole ledger, not this page, so
+    // they need their own query — narrowed to invoices that can still be owed,
+    // which is a far smaller set than every invoice ever raised.
+    prisma.invoice.findMany({
+      where: { status: { in: ["SENT", "PARTIALLY_PAID", "OVERDUE"] } },
+      select: {
+        status: true,
+        dueDate: true,
+        taxRate: true,
+        items: { select: { quantity: true, unitPrice: true } },
+        payments: { select: { amount: true } },
+      },
+    }),
+  ]);
+
+  const rows = invoices.map(withMoney);
 
   // What is actually owed: drafts have not been asked for yet, and a cancelled
   // invoice is not a debt.
-  const awaiting = rows.filter((r) => r.status !== "DRAFT" && r.status !== "CANCELLED");
+  const awaiting = liveInvoices.map(withMoney);
   const outstanding = awaiting.reduce((sum, r) => sum + r.balance, 0);
   const overdue = awaiting.filter((r) => r.status === "OVERDUE");
 
@@ -42,7 +76,7 @@ export default async function InvoicesPage() {
         action={<LinkButton href="/invoices/new">+ New invoice</LinkButton>}
       />
 
-      {rows.length > 0 && (
+      {total > 0 && (
         <div className="mb-4 flex flex-wrap gap-3">
           <Card className="px-5 py-3">
             <p className="text-xs uppercase tracking-wider text-slate-500">Outstanding</p>
@@ -60,7 +94,7 @@ export default async function InvoicesPage() {
           </Card>
           <Card className="px-5 py-3">
             <p className="text-xs uppercase tracking-wider text-slate-500">Invoices</p>
-            <p className="mt-0.5 text-lg font-semibold text-slate-900">{rows.length}</p>
+            <p className="mt-0.5 text-lg font-semibold text-slate-900">{total}</p>
           </Card>
         </div>
       )}
@@ -126,6 +160,14 @@ export default async function InvoicesPage() {
             </div>
         )}
       </Card>
+
+      <Pagination
+        basePath="/invoices"
+        params={new URLSearchParams()}
+        page={page}
+        total={total}
+        noun="invoice"
+      />
     </div>
   );
 }
