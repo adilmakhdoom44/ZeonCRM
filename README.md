@@ -27,6 +27,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Audit log** — who changed what, admin-only, filterable by record type and linking back to the thing that changed
 - **Company profile** — business name, contact details, currency and default tax rate edited in the app, flowing straight onto proposals, invoices and outgoing email
 - **Repeating invoices** — turn any invoice into a monthly, quarterly or yearly arrangement; due ones are raised as drafts you check before sending, and a schedule left unattended catches up rather than skipping months
+- **Contact pages** — each person has their own page: what was logged with them specifically, their numbers as click-to-call and click-to-email, and the quotes their company is deciding on
+- **CSV export** — every invoice as a spreadsheet with totals, received and balance, ready for an accountant
 - **Sign-in throttling** — five failed attempts per email address and twenty per caller in fifteen minutes, counted in the database so it holds across serverless instances
 - **Paginated lists** — customers, invoices and proposals page at 25 rows, with the summary figures still describing the whole ledger
 - **Works on a phone** — every list scrolls inside its card rather than dragging the page sideways, and the nav scrolls instead of wrapping
@@ -114,7 +116,7 @@ Useful scripts:
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm test` | 60 tests over the money, invoice-status, proposal-expiry, recurring-date and tag logic — Node's built-in runner, nothing to install |
+| `npm test` | 71 tests over the money, invoice-status, proposal-expiry, recurring-date, CSV-escaping and tag logic — Node's built-in runner, nothing to install |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed admin user + sample customers |
