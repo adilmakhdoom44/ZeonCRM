@@ -75,6 +75,15 @@ export default async function InvoicesPage({
         description="What you have billed, and what is still owed."
         action={
           <div className="flex items-center gap-3">
+            {/* A real anchor, not <Link>: this is a file download, and client-side
+                navigation would try to render the CSV as a page instead. */}
+            <a
+              href="/invoices/export"
+              download
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Export CSV
+            </a>
             <LinkButton href="/invoices/recurring" variant="secondary">
               Repeating
             </LinkButton>
