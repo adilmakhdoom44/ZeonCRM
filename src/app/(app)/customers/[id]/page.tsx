@@ -193,7 +193,12 @@ export default async function CustomerDetailPage({
                 <div className="flex items-start justify-between gap-4">
                   <div>
                     <p className="text-sm font-medium text-slate-900">
-                      {contact.firstName} {contact.lastName}
+                      <Link
+                        href={`/contacts/${contact.id}`}
+                        className="hover:text-brand-600"
+                      >
+                        {contact.firstName} {contact.lastName}
+                      </Link>
                       {contact.isPrimary && (
                         <span className="ml-2 rounded-full bg-brand-50 px-2 py-0.5 text-[11px] font-medium text-brand-700 ring-1 ring-inset ring-brand-100">
                           Primary

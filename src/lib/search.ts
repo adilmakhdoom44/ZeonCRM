@@ -62,8 +62,7 @@ export async function search(term: string, take = 5): Promise<SearchHit[]> {
     })),
     ...contacts.map((c) => ({
       kind: "Contact" as const,
-      // Contacts have no page of their own — their account is the useful destination.
-      href: `/customers/${c.customer.id}`,
+      href: `/contacts/${c.id}`,
       title: `${c.firstName} ${c.lastName}`,
       subtitle: [c.title, c.customer.name].filter(Boolean).join(" · ") || null,
       badge: null,
