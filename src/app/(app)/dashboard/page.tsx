@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
 
-  const [monthPayments, liveInvoices, openProjects, recentCustomers, upcomingProjects, followUps] =
+  const [monthPayments, liveInvoices, openProjects, recentCustomers, upcomingProjects, followUps, dueSchedules] =
     await Promise.all([
       prisma.payment.findMany({
         where: { receivedAt: { gte: startOfMonth(now) } },
@@ -63,6 +63,13 @@ export default async function DashboardPage() {
         where: { followUpDoneAt: null, followUpAt: { not: null, lte: endOfToday } },
         orderBy: { followUpAt: "asc" },
         include: { customer: { select: { id: true, name: true } } },
+      }),
+      // Standing arrangements that have come round again. Invisible unless you
+      // went looking for them, which for a retainer means forgetting to bill it.
+      prisma.recurringInvoice.findMany({
+        where: { isActive: true, nextRunOn: { lte: endOfToday } },
+        orderBy: { nextRunOn: "asc" },
+        include: { customer: { select: { name: true } } },
       }),
     ]);
 
@@ -148,6 +155,24 @@ export default async function DashboardPage() {
             <p className="mt-0.5 text-sm text-red-700">
               Oldest: {overdue[0].customer.name} ·{" "}
               {overdue[0].dueDate ? `due ${dateFmt.format(overdue[0].dueDate)}` : "no due date"}
+            </p>
+          </div>
+        </Link>
+      )}
+
+      {dueSchedules.length > 0 && (
+        <Link href="/invoices/recurring" className="mb-6 block">
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 transition-colors hover:bg-amber-100/60">
+            <p className="text-sm font-medium text-amber-900">
+              {dueSchedules.length} repeating invoice
+              {dueSchedules.length === 1 ? " is" : "s are"} due to be raised
+            </p>
+            <p className="mt-0.5 text-sm text-amber-700">
+              {dueSchedules
+                .slice(0, 3)
+                .map((s) => s.customer.name)
+                .join(", ")}
+              {dueSchedules.length > 3 && ` and ${dueSchedules.length - 3} more`}
             </p>
           </div>
         </Link>
