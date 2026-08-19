@@ -66,7 +66,20 @@ export default async function ProposalsPage({
       <PageHeader
         title="Proposals"
         description="Quotes you have put in front of customers."
-        action={<LinkButton href="/proposals/new">+ New proposal</LinkButton>}
+        action={
+          <div className="flex items-center gap-3">
+            {/* A real anchor, not <Link>: this is a file download, and client-side
+                navigation would try to render the CSV as a page instead. */}
+            <a
+              href="/proposals/export"
+              download
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Export CSV
+            </a>
+            <LinkButton href="/proposals/new">+ New proposal</LinkButton>
+          </div>
+        }
       />
 
       {total > 0 && (
