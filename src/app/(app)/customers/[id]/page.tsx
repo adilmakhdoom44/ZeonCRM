@@ -15,6 +15,10 @@ import { ActivityTimeline, TimelineActivity } from "@/components/activity-timeli
 import { addTagToCustomerAction, removeTagFromCustomerAction } from "@/lib/actions/tags";
 import { setCustomerOwnerAction } from "@/lib/actions/ownership";
 import { tagChipClass } from "@/lib/tags";
+import { getCompany } from "@/lib/company";
+import { formatMoney, round2, totals } from "@/lib/money";
+import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoices";
+import { effectiveStatus } from "@/lib/proposals";
 import { Badge, Button, Card, CardHeader, EmptyState, LinkButton, PageHeader } from "@/components/ui";
 
 const inputCls =
@@ -51,6 +55,18 @@ export default async function CustomerDetailPage({
       tags: { orderBy: { name: "asc" } },
       owner: { select: { id: true, name: true } },
       projects: { orderBy: { updatedAt: "desc" } },
+      invoices: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          items: { select: { quantity: true, unitPrice: true } },
+          payments: { select: { amount: true } },
+        },
+      },
+      proposals: {
+        orderBy: { createdAt: "desc" },
+        take: 5,
+        include: { items: { select: { quantity: true, unitPrice: true } } },
+      },
       activities: {
         // Undone follow-ups float to the top — they are the part that needs doing.
         orderBy: [{ occurredAt: "desc" }, { createdAt: "desc" }],
@@ -69,6 +85,25 @@ export default async function CustomerDetailPage({
     orderBy: { name: "asc" },
     select: { id: true, name: true },
   });
+
+  const company = await getCompany();
+
+  // What this account is worth and what it still owes. Derived from each invoice's
+  // own items and payments rather than the stored status, for the same reason the
+  // lists do it: a stale column would overstate what is owed.
+  const billing = customer.invoices.map((invoice) => {
+    const money = invoiceTotals(
+      invoice.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
+      Number(invoice.taxRate),
+      invoice.payments.map((p) => ({ amount: Number(p.amount) })),
+    );
+    return { ...invoice, ...money, status: effectiveInvoiceStatus(invoice, money.balance) };
+  });
+
+  const owed = billing.filter((i) => i.status !== "DRAFT" && i.status !== "CANCELLED");
+  const outstanding = round2(owed.reduce((sum, i) => sum + i.balance, 0));
+  const overdueCount = owed.filter((i) => i.status === "OVERDUE").length;
+  const received = round2(billing.reduce((sum, i) => sum + i.paid, 0));
 
   const timeline: TimelineActivity[] = customer.activities.map((activity) => ({
     id: activity.id,
@@ -165,6 +200,35 @@ export default async function CustomerDetailPage({
         <Card className="mb-6 px-5 py-4">
           <p className="text-sm whitespace-pre-wrap text-slate-600">{customer.notes}</p>
         </Card>
+      )}
+
+      {billing.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-3">
+          <Card className="px-5 py-3">
+            <p className="text-xs uppercase tracking-wider text-slate-500">Outstanding</p>
+            <p
+              className={`mt-0.5 text-lg font-semibold ${
+                overdueCount > 0 ? "text-red-600" : "text-slate-900"
+              }`}
+            >
+              {formatMoney(outstanding, company.currency)}
+            </p>
+          </Card>
+          <Card className="px-5 py-3">
+            <p className="text-xs uppercase tracking-wider text-slate-500">Received to date</p>
+            <p className="mt-0.5 text-lg font-semibold text-slate-900">
+              {formatMoney(received, company.currency)}
+            </p>
+          </Card>
+          {overdueCount > 0 && (
+            <Card className="px-5 py-3">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Overdue</p>
+              <p className="mt-0.5 text-lg font-semibold text-red-600">
+                {overdueCount} invoice{overdueCount === 1 ? "" : "s"}
+              </p>
+            </Card>
+          )}
+        </div>
       )}
 
       <div className="space-y-6">
@@ -362,6 +426,106 @@ export default async function CustomerDetailPage({
               </div>
             </form>
           </details>
+        </Card>
+
+        {/* Quotes */}
+        <Card>
+          <CardHeader
+            title="Quotes"
+            action={
+              <LinkButton href={`/proposals/new?customerId=${id}`} variant="secondary">
+                + New quote
+              </LinkButton>
+            }
+          />
+          {customer.proposals.length === 0 ? (
+            <EmptyState title="No quotes for this customer yet" />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {customer.proposals.map((proposal) => (
+                <li key={proposal.id}>
+                  <Link
+                    href={`/proposals/${proposal.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900">
+                        <span className="font-mono tabular-nums">{proposal.number}</span> ·{" "}
+                        {proposal.title}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Badge value={effectiveStatus(proposal)} />
+                      <span className="text-sm font-medium tabular-nums text-slate-900">
+                        {formatMoney(
+                          totals(
+                            proposal.items.map((i) => ({
+                              quantity: Number(i.quantity),
+                              unitPrice: Number(i.unitPrice),
+                            })),
+                            Number(proposal.taxRate),
+                          ).total,
+                          company.currency,
+                        )}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        {/* Invoices */}
+        <Card>
+          <CardHeader
+            title="Invoices"
+            description="Everything billed to this account."
+            action={
+              <LinkButton href={`/invoices/new?customerId=${id}`} variant="secondary">
+                + New invoice
+              </LinkButton>
+            }
+          />
+          {billing.length === 0 ? (
+            <EmptyState title="Nothing billed to this customer yet" />
+          ) : (
+            <ul className="divide-y divide-slate-100">
+              {billing.slice(0, 8).map((invoice) => (
+                <li key={invoice.id}>
+                  <Link
+                    href={`/invoices/${invoice.id}`}
+                    className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-slate-900">
+                        <span className="font-mono tabular-nums">{invoice.number}</span> ·{" "}
+                        {invoice.title}
+                      </p>
+                      <p
+                        className={`text-xs ${
+                          invoice.status === "OVERDUE" ? "font-medium text-red-600" : "text-slate-500"
+                        }`}
+                      >
+                        {invoice.dueDate
+                          ? `due ${invoice.dueDate.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+                          : "no due date"}
+                        {invoice.paid > 0 && ` · ${formatMoney(invoice.paid, company.currency)} received`}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Badge value={invoice.status} />
+                      <span className="text-sm font-medium tabular-nums text-slate-900">
+                        {invoice.balance > 0
+                          ? formatMoney(invoice.balance, company.currency)
+                          : formatMoney(invoice.total, company.currency)}
+                      </span>
+                    </div>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
 
         {/* Projects */}
