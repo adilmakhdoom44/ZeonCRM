@@ -28,6 +28,63 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/*
+ * A visible focus ring on anything reachable by keyboard. Several controls in
+ * the app are bare buttons with no border of their own — the ✕ that removes a
+ * line item, the tag remover — and without this they gave no indication at all
+ * of where the keyboard was. :focus-visible rather than :focus so a mouse click
+ * does not leave a ring behind.
+ */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Available to screen readers, out of the way of everyone else. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* The skip link: hidden until tabbed to, then a normal-looking control. */
+.skip-link {
+  position: absolute;
+  left: 0.75rem;
+  top: -3rem;
+  z-index: 100;
+  border-radius: 0.5rem;
+  background: var(--color-brand-600);
+  color: #fff;
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: top 150ms ease;
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+/* Respect a system preference for less movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Printing a proposal should yield the document alone — no chrome, no buttons. */
 @media print {
   body {

@@ -16,6 +16,11 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="min-h-screen">
+      {/* First stop on a keyboard: past the nav, straight to the page. */}
+      <a href="#main" className="skip-link">
+        Skip to content
+      </a>
+
       <header className="sticky top-0 z-40 border-b border-ink-700 bg-ink-900">
         <div className="mx-auto flex h-14 max-w-6xl items-center gap-6 px-4 sm:px-6">
           <Link href="/dashboard" className="flex shrink-0 items-center gap-2.5">
@@ -27,12 +32,10 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
             </span>
           </Link>
 
-          {/* Scrolls sideways on a phone rather than forcing the whole page wide.
-              shrink-0 only from lg, where there is room for every link at once. */}
           {/* The nav is the only thing that gives: when the bar is crowded it
               scrolls sideways, so the search box and the user menu keep their
               size and nothing ever overlaps. */}
-          <nav className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <nav aria-label="Main" className="-mx-1 flex min-w-0 flex-1 items-center gap-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {nav.map((item) => (
               <Link
                 key={item.href}
@@ -87,7 +90,9 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6">{children}</main>
+      <main id="main" tabIndex={-1} className="mx-auto max-w-6xl px-4 py-8 sm:px-6">
+        {children}
+      </main>
     </div>
   );
 }
