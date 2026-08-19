@@ -28,7 +28,9 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Company profile** — business name, contact details, currency and default tax rate edited in the app, flowing straight onto proposals, invoices and outgoing email
 - **Repeating invoices** — turn any invoice into a monthly, quarterly or yearly arrangement; due ones are raised as drafts you check before sending, and a schedule left unattended catches up rather than skipping months
 - **Contact pages** — each person has their own page: what was logged with them specifically, their numbers as click-to-call and click-to-email, and the quotes their company is deciding on
-- **CSV export** — every invoice as a spreadsheet with totals, received and balance, ready for an accountant
+- **CSV export** — every invoice and every quote as a spreadsheet, ready for an accountant
+- **Money on the account page** — outstanding, received to date and overdue count for a customer, with their quotes and invoices listed underneath
+- **Keyboard and screen-reader basics** — a skip link, a visible focus ring on every control, named landmarks, and reduced-motion honoured
 - **Sign-in throttling** — five failed attempts per email address and twenty per caller in fifteen minutes, counted in the database so it holds across serverless instances
 - **Paginated lists** — customers, invoices and proposals page at 25 rows, with the summary figures still describing the whole ledger
 - **Works on a phone** — every list scrolls inside its card rather than dragging the page sideways, and the nav scrolls instead of wrapping
