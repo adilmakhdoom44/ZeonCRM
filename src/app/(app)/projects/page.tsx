@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
+import { getCompany } from "@/lib/company";
 import { LinkButton, PageHeader } from "@/components/ui";
 import { KanbanBoard, KanbanProject } from "@/components/kanban";
 
@@ -20,8 +21,11 @@ export default async function ProjectsPage({
       customer: { select: { id: true, name: true } },
       tasks: { orderBy: { createdAt: "asc" } },
       owner: { select: { name: true } },
+      expenses: { orderBy: { incurredAt: "desc" } },
     },
   });
+
+  const company = await getCompany();
 
   const teammates = await prisma.user.findMany({
     where: { isActive: true },
@@ -40,6 +44,15 @@ export default async function ProjectsPage({
     customerId: p.customer.id,
     customerName: p.customer.name,
     ownerName: p.owner?.name ?? null,
+    currency: company.currency,
+    expenses: p.expenses.map((e) => ({
+      id: e.id,
+      description: e.description,
+      amount: Number(e.amount),
+      category: e.category,
+      billable: e.billable,
+      incurredAt: e.incurredAt.toISOString(),
+    })),
     tasks: p.tasks.map((t) => ({ id: t.id, title: t.title, isDone: t.isDone })),
   }));
 

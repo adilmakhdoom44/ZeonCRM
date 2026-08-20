@@ -12,6 +12,7 @@ import {
 } from "@/lib/actions/projects";
 import { createInvoiceFromProjectAction } from "@/lib/actions/invoices";
 import { setProjectOwnerAction } from "@/lib/actions/ownership";
+import { ProjectExpenses, ProjectExpense } from "@/components/project-expenses";
 
 export type KanbanTask = {
   id: string;
@@ -30,6 +31,8 @@ export type KanbanProject = {
   customerId: string;
   customerName: string;
   ownerName: string | null;
+  currency: string;
+  expenses: ProjectExpense[];
   tasks: KanbanTask[];
 };
 
@@ -42,13 +45,22 @@ export const STAGE_COLUMNS = [
   { key: "CANCELLED", label: "Cancelled", dot: "bg-slate-300" },
 ] as const;
 
-function formatPrice(price: number | null) {
+/** Whole pounds/dollars on a card — the pennies are noise at a glance. */
+function formatPrice(price: number | null, currency: string) {
   if (price === null) return null;
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(price);
+  try {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(price);
+  } catch {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(price);
+  }
 }
 
 function formatDate(iso: string | null) {
@@ -98,7 +110,7 @@ function Card({
   project: KanbanProject;
   onOpen: () => void;
 }) {
-  const price = formatPrice(project.price);
+  const price = formatPrice(project.price, project.currency);
   const due = formatDate(project.dueDate);
   const cancelled = project.stage === "CANCELLED";
 
@@ -183,7 +195,7 @@ function Column({
         </div>
         {total > 0 && (
           <span className="text-[11px] font-medium text-slate-400">
-            {formatPrice(total)}
+            {formatPrice(total, projects[0]?.currency ?? "USD")}
           </span>
         )}
       </div>
@@ -287,6 +299,13 @@ function ProjectOverlay({
               </p>
             )}
           </div>
+
+          <ProjectExpenses
+            projectId={project.id}
+            expenses={project.expenses}
+            price={project.price}
+            currency={project.currency}
+          />
 
           {/* Owner */}
           <div>
