@@ -311,7 +311,41 @@ async function main() {
     ],
   });
 
-  console.log("Seeded 3 customers, 2 proposals, 3 tags, 2 invoices with payments, and 3 activities.");
+  // Costs on the live projects, so the profitability report has something to
+  // measure instead of an empty state. Deliberately uneven: one job carrying
+  // heavy subcontractor spend is what makes a thin margin worth looking at.
+  const livingProjects = await prisma.project.findMany({
+    where: { stage: { notIn: ["QUOTED", "CANCELLED"] } },
+    select: { id: true, customerId: true, price: true },
+    orderBy: { createdAt: "asc" },
+  });
+
+  const costTemplates = [
+    { description: "Contract designer — 6 days", amount: 3600, category: "SUBCONTRACTOR" as const },
+    { description: "Stock photography licence", amount: 240, category: "STOCK_ASSETS" as const },
+    { description: "Staging environment", amount: 96, category: "SOFTWARE" as const },
+    { description: "Site visit — travel", amount: 180, category: "TRAVEL" as const },
+  ];
+
+  for (const [index, project] of livingProjects.entries()) {
+    // The first project gets the lot; later ones get a slice, so margins differ.
+    const costs = costTemplates.slice(0, Math.max(1, costTemplates.length - index));
+    await prisma.expense.createMany({
+      data: costs.map((cost, i) => ({
+        projectId: project.id,
+        customerId: project.customerId,
+        description: cost.description,
+        amount: cost.amount,
+        category: cost.category,
+        billable: cost.category === "TRAVEL",
+        incurredAt: daysFromNow(-(7 + i * 3)),
+      })),
+    });
+  }
+
+  console.log(
+    "Seeded 3 customers, 2 proposals, 3 tags, 2 invoices with payments, 3 activities, and project costs.",
+  );
 }
 
 main()
