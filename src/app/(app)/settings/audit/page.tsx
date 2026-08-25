@@ -44,11 +44,13 @@ export default async function AuditPage({
   await requireAdmin();
   const { entity } = await searchParams;
 
-  const entries = await prisma.auditLog.findMany({
-    where: entity ? { entity } : {},
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
+  const where = entity ? { entity } : {};
+  const LIMIT = 200;
+
+  const [entries, total] = await Promise.all([
+    prisma.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, take: LIMIT }),
+    prisma.auditLog.count({ where }),
+  ]);
 
   const entities = ["Customer", "Project", "Proposal", "Invoice", "Payment"];
 
@@ -85,6 +87,13 @@ export default async function AuditPage({
           </Link>
         ))}
       </div>
+
+      {total > LIMIT && (
+        <p className="mb-3 text-xs text-slate-500">
+          Showing the most recent {LIMIT} of {total} entries. An audit trail that
+          quietly stops at a cut-off is worse than one that says where it stops.
+        </p>
+      )}
 
       <Card>
         {entries.length === 0 ? (
