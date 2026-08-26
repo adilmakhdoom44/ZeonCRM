@@ -5,6 +5,7 @@ import { getCompany } from "@/lib/company";
 import { formatMoney, round2 } from "@/lib/money";
 import { CATEGORY_LABELS, byCategory, margin, marginTone, type ExpenseCategory } from "@/lib/profit";
 import { Badge, Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
+import { ReportsNav } from "@/components/reports-nav";
 
 export default async function ProfitabilityPage() {
   await requireUser();
@@ -47,6 +48,7 @@ export default async function ProfitabilityPage() {
 
   return (
     <div>
+      <ReportsNav active="/reports/profitability" />
       <PageHeader
         title="Profitability"
         description="What each job earned once its costs are taken off. Quoted and cancelled work is left out."
