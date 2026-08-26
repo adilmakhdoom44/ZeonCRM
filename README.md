@@ -28,8 +28,9 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Company profile** — business name, contact details, currency and default tax rate edited in the app, flowing straight onto proposals, invoices and outgoing email
 - **Repeating invoices** — turn any invoice into a monthly, quarterly or yearly arrangement; due ones are raised as drafts you check before sending, and a schedule left unattended catches up rather than skipping months
 - **Contact pages** — each person has their own page: what was logged with them specifically, their numbers as click-to-call and click-to-email, and the quotes their company is deciding on
-- **CSV export** — every invoice and every quote as a spreadsheet, ready for an accountant
+- **CSV export** — invoices, quotes and costs as spreadsheets, ready for an accountant
 - **Costs and margin** — log what a job cost you (subcontractors, software, travel) against the project, and see price, costs, profit and margin on the card
+- **Aged debtors** — who owes you and how long it has been, split across the usual columns, with the single oldest invoice to chase and what each account owes in total
 - **Profitability report** — every live project ranked by what it made, with a breakdown of where the money went and a warning for anything running under a 20% margin
 - **Money on the account page** — outstanding, received to date and overdue count for a customer, with their quotes and invoices listed underneath
 - **Keyboard and screen-reader basics** — a skip link, a visible focus ring on every control, named landmarks, and reduced-motion honoured
@@ -120,7 +121,7 @@ Useful scripts:
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm test` | 86 tests over the money, invoice-status, margin, proposal-expiry, recurring-date, CSV-escaping and tag logic — Node's built-in runner, nothing to install |
+| `npm test` | 99 tests over the money, invoice-status, margin, debt-ageing, proposal-expiry, recurring-date, CSV-escaping and tag logic — Node's built-in runner, nothing to install |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed admin user + sample customers |
