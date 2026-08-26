@@ -52,6 +52,17 @@ export default async function ProfitabilityPage() {
       <PageHeader
         title="Profitability"
         description="What each job earned once its costs are taken off. Quoted and cancelled work is left out."
+        action={
+          /* A real anchor, not <Link>: this is a file download, and client-side
+             navigation would try to render the CSV as a page instead. */
+          <a
+            href="/reports/expenses/export"
+            download
+            className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+          >
+            Export costs
+          </a>
+        }
       />
 
       {rows.length === 0 ? (
