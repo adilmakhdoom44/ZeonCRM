@@ -31,6 +31,8 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **CSV export** — invoices, quotes and costs as spreadsheets, ready for an accountant
 - **Costs and margin** — log what a job cost you (subcontractors, software, travel) against the project, and see price, costs, profit and margin on the card
 - **Aged debtors** — who owes you and how long it has been, split across the usual columns, with the single oldest invoice to chase and what each account owes in total
+- **Payment reminders** — chase an overdue invoice from the debtors report or the invoice itself; the wording is deliberately mild, and every chase lands on the customer's timeline
+- **Deletion that tells you the cost** — removing a customer counts what goes with it, singles out recorded payments, and requires typing the account name
 - **Profitability report** — every live project ranked by what it made, with a breakdown of where the money went and a warning for anything running under a 20% margin
 - **Money on the account page** — outstanding, received to date and overdue count for a customer, with their quotes and invoices listed underneath
 - **Keyboard and screen-reader basics** — a skip link, a visible focus ring on every control, named landmarks, and reduced-motion honoured
