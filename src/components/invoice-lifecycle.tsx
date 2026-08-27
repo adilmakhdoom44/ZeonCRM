@@ -8,7 +8,7 @@ import {
   reopenInvoiceAction,
   revertInvoiceToDraftAction,
 } from "@/lib/actions/invoices";
-import { emailInvoiceAction } from "@/lib/actions/send";
+import { emailInvoiceAction, sendPaymentReminderAction } from "@/lib/actions/send";
 import { SendButton } from "@/components/send-button";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
@@ -145,8 +145,14 @@ export function InvoiceLifecycle({
                 : "Nothing has been received against this invoice yet."}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap items-start gap-2">
             {previewLink}
+            <SendButton
+              action={sendPaymentReminderAction}
+              id={id}
+              label="Send reminder"
+              className="inline-flex items-center justify-center rounded-lg bg-red-600 px-3.5 py-2 text-sm font-medium text-white transition-colors hover:bg-red-700"
+            />
             {cancelForm}
           </div>
         </div>

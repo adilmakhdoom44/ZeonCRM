@@ -6,7 +6,9 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney, totals } from "@/lib/money";
 import { invoiceTotals } from "@/lib/invoices";
-import { invoiceEmail, proposalEmail, sendEmail } from "@/lib/email";
+import { invoiceEmail, paymentReminderEmail, proposalEmail, sendEmail } from "@/lib/email";
+import { daysOverdue } from "@/lib/ageing";
+import { effectiveInvoiceStatus } from "@/lib/invoices";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "long",
@@ -187,6 +189,83 @@ export async function emailInvoiceAction(formData: FormData) {
 
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/invoices");
+
+  return { ok: true as const, delivered: result.delivered, to: recipient.email };
+}
+
+/**
+ * Chases an overdue invoice. Refuses anything that is not actually owed — a
+ * reminder sent for a settled or cancelled invoice is the kind of mistake a
+ * client remembers, so the guard is here rather than only on the button.
+ */
+export async function sendPaymentReminderAction(formData: FormData) {
+  const user = await requireUser();
+  const id = String(formData.get("id"));
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id },
+    include: {
+      items: true,
+      payments: { select: { amount: true } },
+      customer: {
+        include: {
+          contacts: {
+            orderBy: { isPrimary: "desc" },
+            include: { emails: { take: 1 } },
+          },
+        },
+      },
+    },
+  });
+  if (!invoice) return { ok: false as const, error: "This invoice no longer exists." };
+
+  const money = invoiceTotals(
+    invoice.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
+    Number(invoice.taxRate),
+    invoice.payments.map((p) => ({ amount: Number(p.amount) })),
+  );
+
+  const status = effectiveInvoiceStatus(invoice, money.balance);
+  if (money.balance <= 0) {
+    return { ok: false as const, error: "Nothing is owed on this invoice." };
+  }
+  if (status === "DRAFT" || status === "CANCELLED") {
+    return { ok: false as const, error: "This invoice has not been issued." };
+  }
+
+  const recipient = recipientFrom(invoice.customer.contacts);
+  if (!recipient) {
+    return {
+      ok: false as const,
+      error: `${invoice.customer.name} has no contact with an email address.`,
+    };
+  }
+
+  const late = daysOverdue(invoice.dueDate);
+
+  const { subject, html } = await paymentReminderEmail({
+    contactName: recipient.name,
+    number: invoice.number,
+    amountDue: formatMoney(money.balance),
+    dueDate: invoice.dueDate ? dateFmt.format(invoice.dueDate) : null,
+    daysLate: late,
+    viewUrl: `${baseUrl()}/invoices/${invoice.id}/print`,
+  });
+
+  const result = await sendEmail({ to: recipient.email, subject, html });
+  if (!result.ok) return { ok: false as const, error: result.error };
+
+  await logSend({
+    customerId: invoice.customerId,
+    userId: user.id,
+    subject: `Payment reminder for ${invoice.number} sent to ${recipient.email}`,
+    body: result.delivered
+      ? `${formatMoney(money.balance)} outstanding${late > 0 ? `, ${late} days late` : ""}.`
+      : `${formatMoney(money.balance)} outstanding. Composed but NOT delivered: no email provider is configured.`,
+  });
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/reports/debtors");
 
   return { ok: true as const, delivered: result.delivered, to: recipient.email };
 }

@@ -14,6 +14,7 @@ import {
 } from "@/lib/ageing";
 import { Card, CardHeader, EmptyState, PageHeader } from "@/components/ui";
 import { ReportsNav } from "@/components/reports-nav";
+import { ChaseButton } from "@/components/chase-button";
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
@@ -162,10 +163,10 @@ export default async function DebtorsPage() {
                 {worst.slice(0, 8).map((debt) => {
                   const late = daysOverdue(debt.dueDate);
                   return (
-                    <li key={debt.id}>
+                    <li key={debt.id} className="flex items-center gap-3 px-5 py-3 transition-colors hover:bg-slate-50">
                       <Link
                         href={`/invoices/${debt.id}`}
-                        className="flex items-center justify-between gap-4 px-5 py-3 transition-colors hover:bg-slate-50"
+                        className="flex min-w-0 flex-1 items-center justify-between gap-4"
                       >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium text-slate-900">
@@ -190,6 +191,7 @@ export default async function DebtorsPage() {
                           {formatMoney(debt.balance, company.currency)}
                         </span>
                       </Link>
+                      {late > 0 && <ChaseButton invoiceId={debt.id} />}
                     </li>
                   );
                 })}

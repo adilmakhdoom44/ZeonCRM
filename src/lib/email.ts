@@ -136,6 +136,55 @@ export async function invoiceEmail({
   };
 }
 
+/**
+ * A chase for an overdue invoice. Deliberately mild: most late payment is an
+ * invoice sitting in someone's inbox, not a refusal to pay, and an opening
+ * accusation costs you more than it collects. It states the facts and offers
+ * the link.
+ */
+export async function paymentReminderEmail({
+  contactName,
+  number,
+  amountDue,
+  dueDate,
+  daysLate,
+  viewUrl,
+}: {
+  contactName: string | null;
+  number: string;
+  amountDue: string;
+  dueDate: string | null;
+  daysLate: number;
+  viewUrl: string;
+}) {
+  const company = await getCompany();
+  const lateness =
+    daysLate >= 30
+      ? `now ${daysLate} days past its due date`
+      : daysLate > 0
+        ? `a little overdue`
+        : `due shortly`;
+
+  return {
+    subject: `${company.name} — reminder: invoice ${number}`,
+    html: wrapper(
+      `
+      <p style="margin:0 0 12px">${contactName ? `Hi ${contactName},` : "Hello,"}</p>
+      <p style="margin:0 0 12px">
+        A gentle reminder that invoice <strong>${number}</strong> for
+        <strong>${amountDue}</strong> is ${lateness}${dueDate ? ` (due ${dueDate})` : ""}.
+      </p>
+      <p style="margin:0">
+        If it has already been paid or is with your accounts team, please ignore this — and do let
+        us know if anything about it needs sorting out.
+      </p>
+      ${button(viewUrl, "View the invoice")}
+    `,
+      company,
+    ),
+  };
+}
+
 export async function passwordResetEmail({
   name,
   resetUrl,
