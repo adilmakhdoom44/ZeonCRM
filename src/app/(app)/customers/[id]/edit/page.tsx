@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
-import { updateCustomerAction, deleteCustomerAction } from "@/lib/actions/customers";
-import { Button, Card, CardHeader, PageHeader } from "@/components/ui";
+import { updateCustomerAction } from "@/lib/actions/customers";
+import { Card, PageHeader } from "@/components/ui";
 import { CustomerForm } from "@/components/customer-form";
+import { DeleteCustomer } from "@/components/delete-customer";
 
 export default async function EditCustomerPage({
   params,
@@ -13,8 +14,30 @@ export default async function EditCustomerPage({
   await requireUser();
   const { id } = await params;
 
-  const customer = await prisma.customer.findUnique({ where: { id } });
+  const customer = await prisma.customer.findUnique({
+    where: { id },
+    include: {
+      _count: {
+        select: {
+          contacts: true,
+          addresses: true,
+          projects: true,
+          proposals: true,
+          invoices: true,
+          expenses: true,
+          activities: true,
+          recurring: true,
+        },
+      },
+    },
+  });
   if (!customer) notFound();
+
+  // Payments hang off invoices rather than the customer, so they need counting
+  // separately — and they are the part most worth warning about.
+  const payments = await prisma.payment.count({
+    where: { invoice: { customerId: id } },
+  });
 
   const action = updateCustomerAction.bind(null, id);
 
@@ -25,18 +48,21 @@ export default async function EditCustomerPage({
         <CustomerForm action={action} defaults={customer} cancelHref={`/customers/${id}`} />
       </Card>
 
-      <Card className="mt-6">
-        <CardHeader
-          title="Danger zone"
-          description="Deleting a customer removes its contacts, addresses and projects."
-        />
-        <div className="px-5 py-4">
-          <form action={deleteCustomerAction}>
-            <input type="hidden" name="id" value={id} />
-            <Button variant="danger">Delete customer</Button>
-          </form>
-        </div>
-      </Card>
+      <DeleteCustomer
+        id={id}
+        name={customer.name}
+        impact={{
+          contacts: customer._count.contacts,
+          addresses: customer._count.addresses,
+          projects: customer._count.projects,
+          proposals: customer._count.proposals,
+          invoices: customer._count.invoices,
+          payments,
+          expenses: customer._count.expenses,
+          activities: customer._count.activities,
+          recurring: customer._count.recurring,
+        }}
+      />
     </div>
   );
 }
