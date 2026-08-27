@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { formatMoney, round2 } from "@/lib/money";
 import { effectiveInvoiceStatus, invoiceTotals } from "@/lib/invoices";
+import { daysOverdue } from "@/lib/ageing";
 import { Badge, Card, CardHeader, EmptyState } from "@/components/ui";
 
 const OPEN_STAGES = ["QUOTED", "CONFIRMED", "IN_PROGRESS", "REVIEW"] as const;
@@ -96,6 +97,11 @@ export default async function DashboardPage() {
   const overdue = unpaid.filter((invoice) => invoice.status === "OVERDUE");
   const overdueValue = round2(overdue.reduce((sum, invoice) => sum + invoice.balance, 0));
 
+  // The banner names the worst one, so "oldest" has to mean most days late
+  // rather than merely first in a list sorted by due date.
+  const oldest = [...overdue].sort((a, b) => daysOverdue(b.dueDate) - daysOverdue(a.dueDate))[0];
+  const oldestDays = oldest ? daysOverdue(oldest.dueDate) : 0;
+
   const pipeline = OPEN_STAGES.map((stage) => {
     const inStage = openProjects.filter((project) => project.stage === stage);
     return {
@@ -123,7 +129,7 @@ export default async function DashboardPage() {
     {
       label: "Overdue",
       value: formatMoney(overdueValue),
-      href: "/invoices",
+      href: "/reports/debtors",
       tone: overdueValue > 0 ? "text-red-600" : "text-slate-900",
     },
     {
@@ -146,15 +152,20 @@ export default async function DashboardPage() {
       </div>
 
       {overdue.length > 0 && (
-        <Link href="/invoices" className="mb-6 block">
+        /* Points at the debtors report rather than the invoice list: from here
+           the next thing you want is to chase it, not to browse. */
+        <Link href="/reports/debtors" className="mb-6 block">
           <div className="rounded-xl border border-red-200 bg-red-50 px-5 py-4 transition-colors hover:bg-red-100/60">
             <p className="text-sm font-medium text-red-900">
               {overdue.length} overdue invoice{overdue.length === 1 ? "" : "s"} —{" "}
               {formatMoney(overdueValue)} past its due date
             </p>
             <p className="mt-0.5 text-sm text-red-700">
-              Oldest: {overdue[0].customer.name} ·{" "}
-              {overdue[0].dueDate ? `due ${dateFmt.format(overdue[0].dueDate)}` : "no due date"}
+              Oldest: {oldest.customer.name} ·{" "}
+              {oldestDays > 0
+                ? `${oldestDays} day${oldestDays === 1 ? "" : "s"} late`
+                : "due today"}
+              {" · chase them from the debtors report"}
             </p>
           </div>
         </Link>
