@@ -452,13 +452,17 @@ model Expense {
   amount      Decimal         @db.Decimal(12, 2)
   category    ExpenseCategory @default(OTHER)
   billable    Boolean         @default(false)
+  // Set once the cost has been put on an invoice, so the same expense cannot be
+  // recharged twice. Nulled if that invoice is deleted, which frees it again.
+  rechargedOnInvoiceId String?
   incurredAt  DateTime        @default(now())
   notes       String?         @db.Text
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  project  Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  project          Project?  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  customer         Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  rechargedOn      Invoice?  @relation("RechargedCosts", fields: [rechargedOnInvoiceId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
   @@index([customerId])
@@ -493,6 +497,7 @@ model Invoice {
   recurringInvoice RecurringInvoice? @relation(fields: [recurringInvoiceId], references: [id], onDelete: SetNull)
   items            InvoiceItem[]
   payments         Payment[]
+  rechargedCosts   Expense[]         @relation("RechargedCosts")
 
   @@index([customerId])
   @@index([projectId])
