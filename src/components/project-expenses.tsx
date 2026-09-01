@@ -11,6 +11,8 @@ export type ProjectExpense = {
   amount: number;
   category: string;
   billable: boolean;
+  /** Set once the cost has been put on an invoice. */
+  recharged: boolean;
   incurredAt: string;
 };
 
@@ -89,11 +91,18 @@ export function ProjectExpenses({
               <div className="min-w-0">
                 <p className="truncate text-sm text-slate-900">
                   {expense.description}
-                  {expense.billable && (
+                  {/* One chip, three states: billed already, waiting to be billed,
+                      or the company's own cost. Showing "rechargeable" on a cost
+                      that has been billed would invite billing it again. */}
+                  {expense.recharged ? (
+                    <span className="ml-2 rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+                      recharged
+                    </span>
+                  ) : expense.billable ? (
                     <span className="ml-2 rounded-full bg-brand-50 px-1.5 py-0.5 text-[10px] font-medium text-brand-700">
                       rechargeable
                     </span>
-                  )}
+                  ) : null}
                 </p>
                 <p className="text-xs text-slate-500">
                   {CATEGORY_LABELS[expense.category as ExpenseCategory] ?? expense.category} ·{" "}

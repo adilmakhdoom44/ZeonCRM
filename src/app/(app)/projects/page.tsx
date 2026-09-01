@@ -51,6 +51,7 @@ export default async function ProjectsPage({
       amount: Number(e.amount),
       category: e.category,
       billable: e.billable,
+      recharged: e.rechargedOnInvoiceId !== null,
       incurredAt: e.incurredAt.toISOString(),
     })),
     tasks: p.tasks.map((t) => ({ id: t.id, title: t.title, isDone: t.isDone })),
