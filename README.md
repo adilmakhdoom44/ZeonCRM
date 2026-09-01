@@ -28,8 +28,9 @@ A clean, fast CRM for managing **customers, contacts, addresses, phone numbers, 
 - **Company profile** — business name, contact details, currency and default tax rate edited in the app, flowing straight onto proposals, invoices and outgoing email
 - **Repeating invoices** — turn any invoice into a monthly, quarterly or yearly arrangement; due ones are raised as drafts you check before sending, and a schedule left unattended catches up rather than skipping months
 - **Contact pages** — each person has their own page: what was logged with them specifically, their numbers as click-to-call and click-to-email, and the quotes their company is deciding on
-- **CSV export** — invoices, quotes and costs as spreadsheets, ready for an accountant
+- **CSV export** — invoices, quotes, costs and payments received as spreadsheets, ready for an accountant
 - **Costs and margin** — log what a job cost you (subcontractors, software, travel) against the project, and see price, costs, profit and margin on the card
+- **Recharge costs to the client** — a draft invoice offers the work's unbilled rechargeable costs, one click adds each as its own line, and a cost remembers which invoice took it so nothing is billed twice
 - **Aged debtors** — who owes you and how long it has been, split across the usual columns, with the single oldest invoice to chase and what each account owes in total
 - **Payment reminders** — chase an overdue invoice from the debtors report or the invoice itself; the wording is deliberately mild, and every chase lands on the customer's timeline
 - **Deletion that tells you the cost** — removing a customer counts what goes with it, singles out recorded payments, and requires typing the account name
