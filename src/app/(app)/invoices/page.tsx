@@ -84,6 +84,13 @@ export default async function InvoicesPage({
             >
               Export CSV
             </a>
+            <a
+              href="/invoices/payments/export"
+              download
+              className="inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3.5 py-2 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              Export payments
+            </a>
             <LinkButton href="/invoices/recurring" variant="secondary">
               Repeating
             </LinkButton>
