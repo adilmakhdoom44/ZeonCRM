@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/authz";
 import { effectiveInvoiceStatus, invoiceTotals, isInvoiceEditable } from "@/lib/invoices";
+import { getCompany } from "@/lib/company";
 import { InvoiceEditor, EditorInvoice } from "@/components/invoice-editor";
 
 export default async function InvoicePage({ params }: { params: Promise<{ id: string }> }) {
@@ -22,6 +23,18 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
   ]);
 
   if (!invoice) notFound();
+
+  const company = await getCompany();
+
+  // Same scope the recharge action uses: the project if there is one, else the account.
+  const waitingCosts = await prisma.expense.findMany({
+    where: {
+      billable: true,
+      rechargedOnInvoiceId: null,
+      ...(invoice.projectId ? { projectId: invoice.projectId } : { customerId: invoice.customerId }),
+    },
+    select: { amount: true },
+  });
 
   const money = invoiceTotals(
     invoice.items.map((i) => ({ quantity: Number(i.quantity), unitPrice: Number(i.unitPrice) })),
@@ -56,6 +69,11 @@ export default async function InvoicePage({ params }: { params: Promise<{ id: st
     projectName: invoice.project?.name ?? null,
     proposalId: invoice.proposalId,
     proposalNumber: invoice.proposal?.number ?? null,
+    currency: company.currency,
+    pendingCosts: {
+      count: waitingCosts.length,
+      total: waitingCosts.reduce((sum, cost) => sum + Number(cost.amount), 0),
+    },
     items: invoice.items.map((item) => ({
       description: item.description,
       quantity: Number(item.quantity),

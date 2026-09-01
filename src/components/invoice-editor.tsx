@@ -8,6 +8,7 @@ import { Badge, Card, CardHeader } from "@/components/ui";
 import { InvoiceLifecycle } from "@/components/invoice-lifecycle";
 import { InvoicePayments, EditorPayment } from "@/components/invoice-payments";
 import { RepeatInvoiceForm } from "@/components/recurring-controls";
+import { RechargeCosts } from "@/components/recharge-costs";
 
 export type EditorItem = {
   description: string;
@@ -37,6 +38,9 @@ export type EditorInvoice = {
   projectName: string | null;
   proposalId: string | null;
   proposalNumber: string | null;
+  currency: string;
+  /** Rechargeable costs on this work that have not been billed yet. */
+  pendingCosts: { count: number; total: number };
   items: EditorItem[];
 };
 
@@ -212,6 +216,14 @@ export function InvoiceEditor({
               className="mt-2 w-full resize-none border-0 bg-transparent p-0 text-sm text-slate-600 placeholder:text-slate-400 focus:outline-none disabled:text-slate-600"
             />
           </Card>
+
+          {!readOnly && (
+            <RechargeCosts
+              invoiceId={invoice.id}
+              pending={invoice.pendingCosts}
+              currency={invoice.currency}
+            />
+          )}
 
           <Card>
             <CardHeader title="Line items" description="Quantity × unit price." />

@@ -91,3 +91,75 @@ export async function deleteExpenseAction(formData: FormData) {
 
   if (expense.projectId) refresh(expense.projectId);
 }
+
+/**
+ * Puts a project's rechargeable costs onto one of its draft invoices.
+ *
+ * Only draft invoices: an issued one is locked, and quietly growing a document
+ * the client already has would be worse than refusing. Only costs not already
+ * recharged, so nothing is billed twice. Each becomes its own line, because a
+ * client querying a bill wants to see what the £340 was, not a lump labelled
+ * "expenses".
+ */
+export async function rechargeCostsAction(formData: FormData) {
+  const user = await requireUser();
+  const invoiceId = String(formData.get("invoiceId"));
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id: invoiceId },
+    select: { id: true, status: true, number: true, projectId: true, customerId: true, items: { select: { id: true } } },
+  });
+  if (!invoice) return { ok: false as const, error: "That invoice no longer exists." };
+  if (invoice.status !== "DRAFT") {
+    return { ok: false as const, error: "Only a draft invoice can take new lines." };
+  }
+
+  // Scoped to the project where the invoice has one, otherwise the account.
+  const scope = invoice.projectId
+    ? { projectId: invoice.projectId }
+    : { customerId: invoice.customerId };
+
+  const costs = await prisma.expense.findMany({
+    where: { ...scope, billable: true, rechargedOnInvoiceId: null },
+    orderBy: { incurredAt: "asc" },
+  });
+
+  if (costs.length === 0) {
+    return { ok: false as const, error: "No rechargeable costs are waiting to be billed." };
+  }
+
+  const total = costs.reduce((sum, cost) => sum + Number(cost.amount), 0);
+  let position = invoice.items.length;
+
+  await prisma.$transaction(async (tx) => {
+    for (const cost of costs) {
+      await tx.invoiceItem.create({
+        data: {
+          invoiceId,
+          description: cost.description,
+          quantity: 1,
+          unitPrice: cost.amount,
+          position: position++,
+        },
+      });
+    }
+    await tx.expense.updateMany({
+      where: { id: { in: costs.map((cost) => cost.id) } },
+      data: { rechargedOnInvoiceId: invoiceId },
+    });
+  });
+
+  await recordAudit({
+    actor: user,
+    action: "updated",
+    entity: "Invoice",
+    entityId: invoiceId,
+    summary: `Recharged ${costs.length} cost${costs.length === 1 ? "" : "s"} (${formatMoney(total)}) onto ${invoice.number}`,
+  });
+
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/reports/profitability");
+  if (invoice.projectId) refresh(invoice.projectId);
+
+  return { ok: true as const, count: costs.length, total };
+}
