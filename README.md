@@ -124,7 +124,7 @@ Useful scripts:
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm test` | 99 tests over the money, invoice-status, margin, debt-ageing, proposal-expiry, recurring-date, CSV-escaping and tag logic — Node's built-in runner, nothing to install |
+| `npm test` | 108 tests over the money, invoice-status, margin, debt-ageing, proposal-expiry, recurring-date, CSV-escaping, tag and transactional-email logic — Node's built-in runner, nothing to install |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed admin user + sample customers |
