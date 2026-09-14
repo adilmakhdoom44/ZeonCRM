@@ -88,7 +88,7 @@ One focused module per day. Checked off as they land on `main`.
 - [x] **Day 7 — Search, filters & tags.** Global search across customers, contacts and projects; tag/segment customers; saved filter views on the customer list.
 - [x] **Day 8 — Email sending.** Wire up transactional email (Resend or SMTP): send proposals, invoices and password-reset links directly from the app, with sent-status tracking on the timeline.
 - [x] **Day 9 — Team & accountability.** Assign an account owner per customer and per project, "my work" filters, and an audit log of who changed what.
-- [ ] **Day 10 — Settings, polish & release.** Company profile (name, currency, tax rate) powering proposals/invoices ✅, mobile responsiveness pass ✅, test coverage for the money logic ✅ — **production deploy and smoke test still outstanding**, blocked on a hosted database (`DATABASE_URL` in Vercel is still the placeholder from `.env.example`).
+- [x] **Day 10 — Settings, polish & release.** Company profile (name, currency, tax rate) powering proposals/invoices, mobile responsiveness pass, test coverage for the money logic, and a production deploy — live at https://zeon-crm-azure.vercel.app with the hosted database and Git auto-deploy configured.
 
 ## Stack
 
