@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useOptimistic, useState, useTransition, DragEvent } from "react";
+import { useEffect, useId, useOptimistic, useState, useTransition, DragEvent } from "react";
 import {
   moveProjectStageAction,
   updateProjectTermsAction,
@@ -227,10 +227,21 @@ function ProjectOverlay({
   const [isPending, startTransition] = useTransition();
   const [taskTitle, setTaskTitle] = useState("");
   const terminal = project.stage === "COMPLETED" || project.stage === "CANCELLED";
+  const titleId = useId();
 
   function move(stage: string) {
     onMove(project.id, stage);
   }
+
+  // Modal dialogs must be dismissable from the keyboard, not just by clicking
+  // the backdrop or the close button.
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
 
   return (
     <div
@@ -238,6 +249,9 @@ function ProjectOverlay({
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
         className="w-full max-w-lg rounded-xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
@@ -245,6 +259,7 @@ function ProjectOverlay({
         <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-4">
           <div>
             <h2
+              id={titleId}
               className={`text-lg font-semibold text-slate-900 ${
                 project.stage === "CANCELLED" ? "line-through" : ""
               }`}
