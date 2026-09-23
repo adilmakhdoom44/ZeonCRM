@@ -1,14 +1,7 @@
 import Link from "next/link";
 
-export const PAGE_SIZE = 25;
-
-/** Clamps whatever arrived in the URL to a real page number. */
-export function pageFrom(value: string | undefined, total: number) {
-  const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const asked = Number(value);
-  if (!Number.isFinite(asked) || asked < 1) return 1;
-  return Math.min(Math.trunc(asked), pages);
-}
+export { PAGE_SIZE, pageFrom } from "@/lib/pagination";
+import { PAGE_SIZE } from "@/lib/pagination";
 
 const linkCls =
   "rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50";
