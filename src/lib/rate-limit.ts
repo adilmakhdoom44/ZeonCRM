@@ -2,6 +2,8 @@ import { createHash } from "crypto";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
+export { retryMessage } from "@/lib/retry-message";
+
 export type RateLimitResult = {
   allowed: boolean;
   remaining: number;
@@ -91,9 +93,4 @@ export async function clearRateLimit(scope: string, identifier: string) {
   } catch {
     // Nothing to do: a stale bucket expires on its own.
   }
-}
-
-export function retryMessage(seconds: number) {
-  if (seconds <= 60) return "Too many attempts. Try again in a minute.";
-  return `Too many attempts. Try again in about ${Math.ceil(seconds / 60)} minutes.`;
 }
