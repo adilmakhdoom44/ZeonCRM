@@ -24,6 +24,8 @@ export function ChaseButton({ invoiceId }: { invoiceId: string }) {
   if (result) {
     return (
       <span
+        role="status"
+        aria-live="polite"
         className={`text-xs ${
           !result.ok ? "text-red-600" : result.delivered ? "text-emerald-700" : "text-amber-700"
         }`}

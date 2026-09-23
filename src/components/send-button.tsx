@@ -42,6 +42,8 @@ export function SendButton({
 
       {result && (
         <p
+          role="status"
+          aria-live="polite"
           className={`text-right text-xs ${
             !result.ok ? "text-red-600" : result.delivered ? "text-emerald-700" : "text-amber-700"
           }`}
