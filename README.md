@@ -96,7 +96,7 @@ One focused module per day. Checked off as they land on `main`.
 - [Tailwind CSS v4](https://tailwindcss.com)
 - [Prisma 6](https://www.prisma.io) ORM + **MySQL 8**
 - [Auth.js v5](https://authjs.dev) (NextAuth) credentials provider
-- GitHub Actions CI (lint, typecheck, build)
+- GitHub Actions CI (lint, typecheck, test, build)
 
 ## Local development
 
@@ -124,7 +124,7 @@ Useful scripts:
 | Script | What it does |
 | --- | --- |
 | `npm run dev` | Start the dev server |
-| `npm test` | 108 tests over the money, invoice-status, margin, debt-ageing, proposal-expiry, recurring-date, CSV-escaping, tag and transactional-email logic — Node's built-in runner, nothing to install |
+| `npm test` | 121 tests over the money, invoice-status, margin, debt-ageing, proposal-expiry, recurring-date, CSV-escaping, tag, pagination, retry-message and transactional-email logic — Node's built-in runner, nothing to install |
 | `npm run build` | Production build |
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:seed` | Seed admin user + sample customers |
